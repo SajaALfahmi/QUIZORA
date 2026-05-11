@@ -373,11 +373,9 @@ const CoursesPage = () => {
                 <Card
                   key={course.id}
                   onClick={() => setSelectedCourseId(course.id)}
-                  className={`relative bg-card/80 border transition-all duration-300 cursor-pointer p-6 overflow-hidden
-                    ${isSelected
-                      ? (meta?.selectedBorder ?? "border-primary/80") + " scale-[1.02]"
-                      : (meta?.borderColor ?? "border-border/30") + " hover:scale-[1.01]"
-                    }`}
+                  className={`relative bg-card/80 border border-border/30 transition-all duration-300 cursor-pointer p-6 overflow-hidden hover:border-primary/40 hover:shadow-card hover:shadow-lg
+                    ${isSelected ? "scale-[1.02] border-primary/70 shadow-lg" : "hover:scale-[1.01]"}
+                  `}
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${isSelected ? (meta?.iconBg ?? "bg-muted/60") : (meta?.iconBg ?? "bg-muted/40")}`}>
