@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { BookOpen, Award, TrendingUp, Sparkles, ArrowRight, Globe } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import logo from "@/assets/logo.png";
 
 const LandingPage = () => {
   const navigate = useNavigate();
@@ -33,7 +34,10 @@ const LandingPage = () => {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="text-lg font-bold text-primary">Quizora</span>
+          <div className="flex items-center gap-2">
+            <img src={logo} alt="Quizora" className="w-8 h-8 object-contain" />
+            <span className="text-lg font-bold text-foreground hidden sm:inline">Quizora</span>
+          </div>
           <div className="flex items-center gap-4">
             <button
               onClick={() => setLanguage(language === "en" ? "ar" : "en")}
@@ -51,12 +55,10 @@ const LandingPage = () => {
 
       <section className="py-20 md:py-28 text-center">
         <div className="max-w-4xl mx-auto px-6">
-          <div className="flex justify-center mb-4">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30">
-              <BookOpen className="w-10 h-10 text-primary" />
-            </div>
+          <div className="flex justify-center mb-6">
+            <img src={logo} alt="Quizora" className="w-20 h-20 object-contain" />
           </div>
-          <h1 className="text-4xl font-bold text-primary mb-4">Quizora</h1>
+          <h1 className="text-4xl font-bold text-foreground mb-4">Quizora</h1>
           <div className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-muted/40 border border-border/50 mb-8">
             <Sparkles className="w-4 h-4 text-accent" />
             <span className="text-sm text-muted-foreground font-medium">{t("landing.tagline")}</span>

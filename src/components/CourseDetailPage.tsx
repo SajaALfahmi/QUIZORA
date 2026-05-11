@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import logo from "@/assets/logo.png";
 
 interface Review {
   id: string;
@@ -130,11 +131,9 @@ const CourseDetailPage = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-3">
-            <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30">
-              <BookOpen className="w-5 h-5 text-primary" />
-            </div>
-            <span className="text-lg font-bold text-primary">Quizora</span>
+          <div className="flex items-center gap-2">
+            <img src={logo} alt="Quizora" className="w-8 h-8 object-contain" />
+            <span className="text-lg font-bold text-foreground hidden sm:inline">Quizora</span>
           </div>
           <div className="flex items-center gap-4">
             <button onClick={() => navigate("/dashboard")} className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground transition-colors">

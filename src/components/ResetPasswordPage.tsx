@@ -8,6 +8,7 @@ import { Lock, BookOpen } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import logo from "@/assets/logo.png";
 
 const ResetPasswordPage = () => {
   const [password, setPassword] = useState("");
@@ -33,8 +34,10 @@ const ResetPasswordPage = () => {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-3"><div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30"><BookOpen className="w-8 h-8 text-primary" /></div></div>
-          <h1 className="text-2xl font-bold text-primary mb-1">{t("reset.title")}</h1>
+          <div className="flex justify-center mb-4">
+            <img src={logo} alt="Quizora" className="w-16 h-16 object-contain" />
+          </div>
+          <h1 className="text-2xl font-bold text-foreground mb-2">{t("reset.title")}</h1>
           <p className="text-sm text-muted-foreground">{t("reset.enterNew")}</p>
         </div>
         <Card className="bg-card/80 border border-border/30 shadow-xl">

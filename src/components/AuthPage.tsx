@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import { UserPlus, Mail, Lock, User, BookOpen, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Navigate } from "react-router-dom";
@@ -114,12 +113,10 @@ const handleSocialLogin = async (provider: "google" | "apple") => {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="flex justify-center mb-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30">
-              <BookOpen className="w-8 h-8 text-primary" />
-            </div>
+          <div className="flex justify-center mb-4">
+            <img src={logo} alt="Quizora" className="w-16 h-16 object-contain" />
           </div>
-          <h1 className="text-2xl font-bold text-primary mb-1">Quizora</h1>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Quizora</h1>
           <p className="text-sm text-muted-foreground">{t("auth.accessDashboard")}</p>
         </div>
 
