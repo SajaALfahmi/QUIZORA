@@ -265,7 +265,7 @@ const SettingsPage = () => {
         <Card className="bg-card/80 border border-border/30">
           <CardHeader>
             <div className="flex items-center gap-3">
-              <div className="p-2.5 rounded-xl bg-gradient-to-br from-cyan-500 to-cyan-500/40">
+              <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary to-primary/40">
                 <Shield className="w-5 h-5 text-foreground" />
               </div>
               <div>

@@ -2,6 +2,7 @@ import { Home, Search, Bell, LogOut, Globe } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import logo from "@/assets/logo.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,7 +26,12 @@ const AppTopbar = () => {
 
   return (
     <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/50">
-      <div className="flex items-center justify-end gap-4 px-6 py-3">
+      <div className="flex items-center justify-between gap-4 px-6 py-3">
+        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate("/dashboard")}>
+          <img src={logo} alt="Quizora" className="w-6 h-6 md:w-7 md:h-7 object-contain" />
+          <span className="text-base md:text-lg font-bold text-foreground hidden sm:inline">Quizora</span>
+        </div>
+        <div className="flex items-center justify-end gap-4">
         <button
           onClick={() => setLanguage(language === "en" ? "ar" : "en")}
           className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
@@ -60,6 +66,7 @@ const AppTopbar = () => {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        </div>
       </div>
     </header>
   );

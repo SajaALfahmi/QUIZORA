@@ -56,9 +56,9 @@ const courseMeta: Record<string, {
   },
   "CompTIA Security+": {
     icon: Shield,
-    iconBg: "bg-blue-500/20", iconColor: "text-blue-400",
-    borderColor: "border-blue-500/30", selectedBorder: "border-blue-500/80",
-    badgeKey: "badge.intermediate", badgeColor: "text-blue-400",
+    iconBg: "bg-primary/20", iconColor: "text-primary",
+    borderColor: "border-primary/30", selectedBorder: "border-primary/80",
+    badgeKey: "badge.intermediate", badgeColor: "text-primary",
     tagKeys: ["tag.threatManagement", "tag.cryptography", "tag.riskAssessment"],
   },
   "CCNA": {
@@ -91,44 +91,44 @@ const courseMeta: Record<string, {
   },
   "Physics": {
     icon: Atom,
-    iconBg: "bg-cyan-500/20", iconColor: "text-cyan-400",
-    borderColor: "border-cyan-500/30", selectedBorder: "border-cyan-500/80",
-    badgeKey: "badge.highSchool", badgeColor: "text-cyan-400",
+    iconBg: "bg-primary/20", iconColor: "text-primary",
+    borderColor: "border-primary/30", selectedBorder: "border-primary/80",
+    badgeKey: "badge.highSchool", badgeColor: "text-primary",
     tagKeys: ["tag.mechanics", "tag.electricity", "tag.waves"],
   },
   "Chemistry": {
     icon: FlaskConical,
-    iconBg: "bg-green-500/20", iconColor: "text-green-400",
-    borderColor: "border-green-500/30", selectedBorder: "border-green-500/80",
-    badgeKey: "badge.highSchool", badgeColor: "text-green-400",
+    iconBg: "bg-secondary/20", iconColor: "text-secondary",
+    borderColor: "border-secondary/30", selectedBorder: "border-secondary/80",
+    badgeKey: "badge.highSchool", badgeColor: "text-secondary",
     tagKeys: ["tag.organic", "tag.reactions", "tag.periodicTable"],
   },
   "Biology": {
     icon: Beaker,
-    iconBg: "bg-emerald-500/20", iconColor: "text-emerald-400",
-    borderColor: "border-emerald-500/30", selectedBorder: "border-emerald-500/80",
-    badgeKey: "badge.highSchool", badgeColor: "text-emerald-400",
+    iconBg: "bg-accent/20", iconColor: "text-accent",
+    borderColor: "border-accent/30", selectedBorder: "border-accent/80",
+    badgeKey: "badge.highSchool", badgeColor: "text-accent",
     tagKeys: ["tag.cells", "tag.genetics", "tag.ecosystems"],
   },
   "Geography": {
     icon: Globe,
-    iconBg: "bg-teal-500/20", iconColor: "text-teal-400",
-    borderColor: "border-teal-500/30", selectedBorder: "border-teal-500/80",
-    badgeKey: "badge.highSchool", badgeColor: "text-teal-400",
+    iconBg: "bg-primary/20", iconColor: "text-primary",
+    borderColor: "border-primary/30", selectedBorder: "border-primary/80",
+    badgeKey: "badge.highSchool", badgeColor: "text-primary",
     tagKeys: ["tag.physicalGeo", "tag.humanGeo", "tag.maps"],
   },
   "Arabic Language": {
     icon: BookMarked,
-    iconBg: "bg-rose-500/20", iconColor: "text-rose-400",
-    borderColor: "border-rose-500/30", selectedBorder: "border-rose-500/80",
-    badgeKey: "badge.highSchool", badgeColor: "text-rose-400",
+    iconBg: "bg-secondary/20", iconColor: "text-secondary",
+    borderColor: "border-secondary/30", selectedBorder: "border-secondary/80",
+    badgeKey: "badge.highSchool", badgeColor: "text-secondary",
     tagKeys: ["tag.grammar", "tag.literature", "tag.rhetoric"],
   },
   "Islamic Studies": {
     icon: GraduationCap,
-    iconBg: "bg-amber-500/20", iconColor: "text-amber-400",
-    borderColor: "border-amber-500/30", selectedBorder: "border-amber-500/80",
-    badgeKey: "badge.highSchool", badgeColor: "text-amber-400",
+    iconBg: "bg-accent/20", iconColor: "text-accent",
+    borderColor: "border-accent/30", selectedBorder: "border-accent/80",
+    badgeKey: "badge.highSchool", badgeColor: "text-accent",
     tagKeys: ["tag.tawheed", "tag.fiqh", "tag.hadith"],
   },
 };
@@ -272,12 +272,12 @@ const CoursesPage = () => {
         {selectedCategory === "tahseeli" && !tahseeliTrack && (
           <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             <Card
-              className="group relative bg-card/80 border border-cyan-500/30 hover:border-cyan-500/70 transition-all duration-300 cursor-pointer p-0 overflow-hidden"
+              className="group relative bg-card/80 border border-border/30 hover:border-primary/40 hover:shadow-card hover:shadow-lg transition-all duration-300 cursor-pointer p-0 overflow-hidden"
               onClick={() => setTahseeliTrack("scientific")}
             >
-              <div className="h-1.5 bg-gradient-to-r from-cyan-500 to-blue-500" />
+              <div className="h-1.5 bg-gradient-to-r from-primary to-secondary" />
               <div className="p-7">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500/40 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
                   <Microscope className="w-7 h-7 text-foreground" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-2">
@@ -288,10 +288,10 @@ const CoursesPage = () => {
                 </p>
                 <div className="flex flex-wrap gap-2 mb-5">
                   {["الفيزياء", "الرياضيات", "الأحياء", "الكيمياء"].map((s) => (
-                    <span key={s} className="px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-400">{s}</span>
+                    <span key={s} className="px-2.5 py-0.5 rounded-full bg-muted/20 border border-border/30 text-xs text-muted-foreground">{s}</span>
                   ))}
                 </div>
-                <Button className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-foreground font-semibold">
+                <Button className="w-full rounded-xl bg-gradient-to-r from-primary to-secondary text-foreground font-semibold shadow-lg">
                   {language === "ar" ? "اختر العلمي" : "Select Scientific"}
                   <ArrowRight className={`w-4 h-4 ${language === "ar" ? "mr-2 rotate-180" : "ml-2"}`} />
                 </Button>
@@ -299,12 +299,12 @@ const CoursesPage = () => {
             </Card>
 
             <Card
-              className="group relative bg-card/80 border border-rose-500/30 hover:border-rose-500/70 transition-all duration-300 cursor-pointer p-0 overflow-hidden"
+              className="group relative bg-card/80 border border-border/30 hover:border-primary/40 hover:shadow-card hover:shadow-lg transition-all duration-300 cursor-pointer p-0 overflow-hidden"
               onClick={() => setTahseeliTrack("literary")}
             >
-              <div className="h-1.5 bg-gradient-to-r from-rose-500 to-amber-500" />
+              <div className="h-1.5 bg-gradient-to-r from-secondary to-accent" />
               <div className="p-7">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-amber-500/40 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-secondary/20 to-accent/20 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
                   <BookMarked className="w-7 h-7 text-foreground" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-2">
@@ -315,10 +315,10 @@ const CoursesPage = () => {
                 </p>
                 <div className="flex flex-wrap gap-2 mb-5">
                   {["الجغرافيا", "اللغة العربية", "الدروس الإسلامية"].map((s) => (
-                    <span key={s} className="px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400">{s}</span>
+                    <span key={s} className="px-2.5 py-0.5 rounded-full bg-muted/20 border border-border/30 text-xs text-muted-foreground">{s}</span>
                   ))}
                 </div>
-                <Button className="w-full rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 text-foreground font-semibold">
+                <Button className="w-full rounded-xl bg-gradient-to-r from-secondary to-accent text-foreground font-semibold shadow-lg">
                   {language === "ar" ? "اختر الأدبي" : "Select Literary"}
                   <ArrowRight className={`w-4 h-4 ${language === "ar" ? "mr-2 rotate-180" : "ml-2"}`} />
                 </Button>
