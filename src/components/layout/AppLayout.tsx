@@ -1,16 +1,18 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import AppSidebar from "./AppSidebar";
 import AppTopbar from "./AppTopbar";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const AppLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useLanguage();
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const onToggle = () => setSidebarOpen(!sidebarOpen);
 
   return (
     <div className="min-h-screen bg-background">
-      <AppSidebar />
-      <div className="ml-56 rtl:ml-0 rtl:mr-56 flex flex-col min-h-screen">
-        <AppTopbar />
+      <AppSidebar isOpen={sidebarOpen} onToggle={onToggle} />
+      <div className={`ml-56 rtl:ml-0 rtl:mr-56 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? '' : 'ml-0 rtl:mr-0'}`}>
+        <AppTopbar onToggleSidebar={onToggle} />
         <main className="flex-1">
           {children}
         </main>

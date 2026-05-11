@@ -88,7 +88,7 @@ Deno.serve(async (req: Request) => {
         messages: [
           {
             role: "system",
-            content: `You are an expert question generator for Saudi standardized tests. Generate questions in Arabic. Always respond with valid JSON only, no markdown.`,
+            content: `You are an expert question generator for Saudi standardized tests. Generate questions in Arabic. Always respond with valid JSON only, no markdown. Respect the requested difficulty level exactly and generate questions appropriate for that level.`,
           },
           { role: "user", content: prompt },
         ],
@@ -166,11 +166,26 @@ function buildQuestionPrompt(course: any, skill: any, difficulty: string, count:
     hard: "صعب",
   };
 
-  return `Generate ${count} multiple-choice questions in Arabic for:
+  return `Generate ${count} high-quality multiple-choice questions in Arabic for Saudi high school students preparing for the Tahseeli exam.
+
 - Test: ${categoryMap[course.category] || course.category}
 - Subject: ${course.sub_category} (${course.title})
 - Skill: ${skill.name}${skill.description ? ` - ${skill.description}` : ""}
 - Difficulty: ${difficultyMap[difficulty] || difficulty}
+
+STRICT RULES:
+- Use the requested difficulty exactly: ${difficultyMap[difficulty] || difficulty}.
+- Easy: clear and focused questions with simple reasoning.
+- Medium: questions requiring understanding, interpretation, or moderate analysis.
+- Hard: questions requiring deeper reasoning, multiple steps, comparison, or application.
+- Questions must test real knowledge, not just definitions.
+- The correct answer must NEVER be the same word as the question.
+- The correct answer must not repeat exact wording from the question stem.
+- Wrong answers must be plausible and related to the topic.
+- Questions should require thinking, not just reading.
+- For Arabic language: test grammar rules, literary devices, and comprehension.
+- For Geography: test locations, climate, population, and economic geography.
+- For Islamic Studies: test Quran, Hadith, Fiqh, and Islamic history.
 
 Return JSON with this exact structure:
 {
@@ -189,9 +204,9 @@ Return JSON with this exact structure:
 }
 
 Rules:
-- Each question must have exactly 4 options
-- Exactly one option must be correct
-- Questions must be appropriate for the difficulty level
-- Explanations should be educational and detailed
-- All text must be in Arabic`;
+- Each question must have exactly 4 options.
+- Exactly one option must be correct.
+- Questions must be appropriate for the difficulty level.
+- Explanations should be educational and detailed.
+- All text must be in Arabic.`;
 }
