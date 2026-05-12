@@ -5,6 +5,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const AppLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useLanguage();
+<<<<<<< HEAD
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const onToggle = () => setSidebarOpen(!sidebarOpen);
 
@@ -13,6 +14,15 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
       <AppSidebar isOpen={sidebarOpen} onToggle={onToggle} />
       <div className={`ml-56 rtl:ml-0 rtl:mr-56 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? '' : 'ml-0 rtl:mr-0'}`}>
         <AppTopbar onToggleSidebar={onToggle} />
+=======
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  return (
+    <div className="min-h-screen bg-background">
+      <AppSidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((prev) => !prev)} />
+      <div className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarCollapsed ? "ml-0 rtl:mr-0" : "ml-56 rtl:mr-56"}`}>
+        <AppTopbar />
+>>>>>>> 43cc9fc (fix layout build issues)
         <main className="flex-1">
           {children}
         </main>
