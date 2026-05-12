@@ -5,29 +5,36 @@ import { useLanguage } from "@/contexts/LanguageContext";
 
 const AppLayout = ({ children }: { children: ReactNode }) => {
   const { t } = useLanguage();
-<<<<<<< HEAD
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const onToggle = () => setSidebarOpen(!sidebarOpen);
-
-  return (
-    <div className="min-h-screen bg-background">
-      <AppSidebar isOpen={sidebarOpen} onToggle={onToggle} />
-      <div className={`ml-56 rtl:ml-0 rtl:mr-56 flex flex-col min-h-screen transition-all duration-300 ${sidebarOpen ? '' : 'ml-0 rtl:mr-0'}`}>
-        <AppTopbar onToggleSidebar={onToggle} />
-=======
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  const handleToggleSidebar = () => {
+    setSidebarCollapsed(!sidebarCollapsed);
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      <AppSidebar collapsed={sidebarCollapsed} onToggle={() => setSidebarCollapsed((prev) => !prev)} />
-      <div className={`flex flex-col min-h-screen transition-all duration-300 ${sidebarCollapsed ? "ml-0 rtl:mr-0" : "ml-56 rtl:mr-56"}`}>
-        <AppTopbar />
->>>>>>> 43cc9fc (fix layout build issues)
-        <main className="flex-1">
-          {children}
+      <AppSidebar
+        collapsed={sidebarCollapsed}
+        onToggle={handleToggleSidebar}
+      />
+
+      <div
+        className={`flex flex-col min-h-screen transition-all duration-300 ${
+          sidebarCollapsed
+            ? "ml-12 rtl:ml-0 rtl:mr-12"
+            : "ml-56 rtl:ml-0 rtl:mr-56"
+        }`}
+      >
+        <AppTopbar onToggleSidebar={handleToggleSidebar} />
+
+        <main className="flex-1 p-6">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
-        <footer className="border-t border-border/50 bg-muted/30 py-4 text-center">
-          <p className="text-sm text-muted-foreground">© 2026 Quizora. All rights reserved.</p>
+
+        <footer className="border-t border-border/50 py-4 px-6 text-center text-sm text-muted-foreground">
+          {t("common.footer")}
         </footer>
       </div>
     </div>
