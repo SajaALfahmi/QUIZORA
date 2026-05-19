@@ -47,18 +47,18 @@ const QuestionsPage = () => {
   const [questionNumber, setQuestionNumber] = useState(0);
   const [totalCorrect, setTotalCorrect] = useState(0);
   const totalTimerRef = useRef<number>(0);
-const totalIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const totalIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [finished, setFinished] = useState(false);
   const timerRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-useEffect(() => {
-  totalIntervalRef.current = setInterval(() => { totalTimerRef.current += 1; }, 1000);
-  return () => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (totalIntervalRef.current) clearInterval(totalIntervalRef.current);
-  };
-}, []);
+  useEffect(() => {
+    totalIntervalRef.current = setInterval(() => { totalTimerRef.current += 1; }, 1000);
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (totalIntervalRef.current) clearInterval(totalIntervalRef.current);
+    };
+  }, []);
 
   const handleStartQuiz = async () => {
     setShowSettings(false);
@@ -70,7 +70,8 @@ useEffect(() => {
         return;
       }
 
-      const result = await adaptiveEngine.startSession(courseId, selectedCount);
+      // ✅ Pass difficulty to session
+      const result = await adaptiveEngine.startSession(courseId, selectedCount, selectedDifficulty);
       setSessionId(result.session.id);
       await fetchNextQuestion(result.session.id);
     } catch (error: any) {
@@ -123,18 +124,19 @@ useEffect(() => {
   };
 
   const handleNext = () => {
-  if (questionNumber >= selectedCount) {
-    if (totalIntervalRef.current) clearInterval(totalIntervalRef.current);
-    setFinished(true);
-    return;
-  }
-  if (sessionId) fetchNextQuestion(sessionId);
-};
+    if (questionNumber >= selectedCount) {
+      if (totalIntervalRef.current) clearInterval(totalIntervalRef.current);
+      setFinished(true);
+      return;
+    }
+    if (sessionId) fetchNextQuestion(sessionId);
+  };
+
   const handleEndSession = async () => {
-  if (totalIntervalRef.current) clearInterval(totalIntervalRef.current);
-  if (sessionId) await adaptiveEngine.endSession(sessionId);
-  navigate("/evaluation", { state: { totalQuestions: questionNumber, totalCorrect, sessionId, timeSpentSeconds: totalTimerRef.current } });
-};
+    if (totalIntervalRef.current) clearInterval(totalIntervalRef.current);
+    if (sessionId) await adaptiveEngine.endSession(sessionId);
+    navigate("/evaluation", { state: { totalQuestions: questionNumber, totalCorrect, sessionId, timeSpentSeconds: totalTimerRef.current } });
+  };
 
   const difficultyLabel = (d: DifficultyOption) => {
     if (d === "auto") return t("quiz.auto");

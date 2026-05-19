@@ -7,7 +7,7 @@ function throwFunctionError(error: any): never {
 }
 
 export const adaptiveEngine = {
-  startSession: async (courseId: string, totalQuestions: number) => {
+  startSession: async (courseId: string, totalQuestions: number, difficulty: string = "auto") => {
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -15,7 +15,11 @@ export const adaptiveEngine = {
     const { data, error } = await supabase.functions.invoke(
       "adaptive-engine",
       {
-        body: JSON.stringify({ course_id: courseId, total_questions: totalQuestions }),
+        body: JSON.stringify({
+          course_id: courseId,
+          total_questions: totalQuestions,
+          difficulty_mode: difficulty, // ✅ يمرر الـ difficulty للـ edge function
+        }),
         headers: {
           Authorization: `Bearer ${session?.access_token}`,
           "Content-Type": "application/json",
@@ -23,9 +27,6 @@ export const adaptiveEngine = {
         },
       }
     );
-
-    console.log("START SESSION DATA:", data);
-    console.log("START SESSION ERROR:", error);
 
     if (error) throwFunctionError(error);
     return data;
@@ -53,9 +54,6 @@ export const adaptiveEngine = {
       }
     );
 
-    console.log("SUBMIT ANSWER DATA:", data);
-    console.log("SUBMIT ANSWER ERROR:", error);
-
     if (error) throwFunctionError(error);
     return data;
   },
@@ -68,10 +66,7 @@ export const adaptiveEngine = {
     const { data, error } = await supabase.functions.invoke(
       "adaptive-engine",
       {
-        body: JSON.stringify({
-          session_id: sessionId,
-          _action: "next-question",
-        }),
+        body: JSON.stringify({ session_id: sessionId }),
         headers: {
           Authorization: `Bearer ${session?.access_token}`,
           "Content-Type": "application/json",
@@ -79,9 +74,6 @@ export const adaptiveEngine = {
         },
       }
     );
-
-    console.log("NEXT QUESTION DATA:", data);
-    console.log("NEXT QUESTION ERROR:", error);
 
     if (error) throwFunctionError(error);
     return data;
@@ -103,9 +95,6 @@ export const adaptiveEngine = {
         },
       }
     );
-
-    console.log("END SESSION DATA:", data);
-    console.log("END SESSION ERROR:", error);
 
     if (error) throw error;
     return data;
@@ -134,9 +123,6 @@ export const aiService = {
       }
     );
 
-    console.log("GENERATE QUESTIONS DATA:", data);
-    console.log("GENERATE QUESTIONS ERROR:", error);
-
     if (error) throw error;
     return data;
   },
@@ -160,9 +146,6 @@ export const aiService = {
         },
       }
     );
-
-    console.log("GENERATE EXPLANATION DATA:", data);
-    console.log("GENERATE EXPLANATION ERROR:", error);
 
     if (error) throw error;
     return data;

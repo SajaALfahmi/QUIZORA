@@ -9,39 +9,27 @@ const corsHeaders = {
 };
 
 // ===== BKT Parameters =====
-// These are the 4 core parameters of Bayesian Knowledge Tracing
 const BKT = {
-  P_L0: 0.3,   // Prior probability user knows the skill
-  P_T: 0.15,   // Probability of learning after each question
-  P_G: 0.2,    // Probability of guessing correctly (without knowing)
-  P_S: 0.1,    // Probability of slipping (wrong despite knowing)
+  P_L0: 0.3,
+  P_T: 0.15,
+  P_G: 0.2,
+  P_S: 0.1,
 };
 
-// Update mastery level using BKT after each answer
 function updateMastery(currentMastery: number, isCorrect: boolean): number {
   const pL = currentMastery;
-
-  // P(correct) = P(know) * (1 - P_S) + P(don't know) * P_G
   const pCorrect = pL * (1 - BKT.P_S) + (1 - pL) * BKT.P_G;
   const pWrong = 1 - pCorrect;
-
   let pLgivenObs: number;
   if (isCorrect) {
-    // Bayes update: P(know | correct)
     pLgivenObs = (pL * (1 - BKT.P_S)) / pCorrect;
   } else {
-    // Bayes update: P(know | wrong)
     pLgivenObs = (pL * BKT.P_S) / pWrong;
   }
-
-  // Apply learning: P(know after) = P(know | obs) + P(don't know | obs) * P_T
   const newMastery = pLgivenObs + (1 - pLgivenObs) * BKT.P_T;
-
-  // Clamp between 0 and 1
   return Math.max(0, Math.min(1, newMastery));
 }
 
-// Map mastery level (0-1) to difficulty
 function masteryToDifficulty(mastery: number): string {
   if (mastery >= 0.7) return "hard";
   if (mastery >= 0.4) return "medium";
@@ -58,6 +46,7 @@ interface SubmitAnswerPayload {
 interface StartSessionPayload {
   course_id: string;
   total_questions?: number;
+  difficulty_mode?: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -125,13 +114,19 @@ Deno.serve(async (req: Request) => {
 });
 
 async function handleStartSession(supabaseService: any, userId: string, payload: StartSessionPayload) {
-  const { course_id, total_questions } = payload;
+  const { course_id, total_questions, difficulty_mode } = payload;
 
   await ensureCourseExists(supabaseService, course_id);
 
   const { data: session, error } = await supabaseService
     .from("learning_sessions")
-    .insert({ user_id: userId, course_id, status: "active", total_questions: total_questions ?? 25 })
+    .insert({
+      user_id: userId,
+      course_id,
+      status: "active",
+      total_questions: total_questions ?? 25,
+      difficulty_mode: difficulty_mode || "auto", // ✅ الصح
+    })
     .select()
     .single();
 
@@ -150,7 +145,6 @@ async function handleStartSession(supabaseService: any, userId: string, payload:
 async function handleSubmitAnswer(supabaseService: any, userId: string, payload: SubmitAnswerPayload) {
   const { session_id, question_id, selected_option_id, time_spent_seconds } = payload;
 
-  // Check if answer is correct
   const { data: option } = await supabaseService
     .from("answer_options")
     .select("is_correct")
@@ -159,7 +153,6 @@ async function handleSubmitAnswer(supabaseService: any, userId: string, payload:
 
   const isCorrect = option?.is_correct ?? false;
 
-  // Save the answer
   await supabaseService.from("user_answers").insert({
     user_id: userId,
     session_id,
@@ -170,7 +163,6 @@ async function handleSubmitAnswer(supabaseService: any, userId: string, payload:
   });
 
   // ===== BKT Update =====
-  // Get the skill for this question
   const { data: question } = await supabaseService
     .from("questions")
     .select("skill_id")
@@ -180,7 +172,6 @@ async function handleSubmitAnswer(supabaseService: any, userId: string, payload:
   if (question?.skill_id) {
     const skillId = question.skill_id;
 
-    // Get current mastery level
     const { data: skillLevel } = await supabaseService
       .from("user_skill_levels")
       .select("mastery_level, questions_attempted, questions_correct")
@@ -190,11 +181,9 @@ async function handleSubmitAnswer(supabaseService: any, userId: string, payload:
 
     const currentMastery = skillLevel?.mastery_level ?? BKT.P_L0;
     const newMastery = updateMastery(currentMastery, isCorrect);
-
     const questionsAttempted = (skillLevel?.questions_attempted ?? 0) + 1;
     const questionsCorrect = (skillLevel?.questions_correct ?? 0) + (isCorrect ? 1 : 0);
 
-    // Upsert mastery level
     await supabaseService.from("user_skill_levels").upsert({
       user_id: userId,
       skill_id: skillId,
@@ -204,7 +193,7 @@ async function handleSubmitAnswer(supabaseService: any, userId: string, payload:
       updated_at: new Date().toISOString(),
     }, { onConflict: "user_id,skill_id" });
 
-    console.log(`BKT Update: mastery ${currentMastery.toFixed(3)} → ${newMastery.toFixed(3)} (correct: ${isCorrect})`);
+    console.log(`BKT: ${currentMastery.toFixed(3)} → ${newMastery.toFixed(3)} (correct: ${isCorrect})`);
   }
 
   return new Response(JSON.stringify({ success: true, is_correct: isCorrect }), {
@@ -222,7 +211,7 @@ async function handleNextQuestion(supabaseService: any, userId: string, sessionI
 
   const { data: session, error: sessionError } = await supabaseService
     .from("learning_sessions")
-    .select("id, course_id, total_questions")
+    .select("id, course_id, total_questions, difficulty_mode") // ✅ الصح
     .eq("id", sessionId)
     .single();
 
@@ -233,7 +222,8 @@ async function handleNextQuestion(supabaseService: any, userId: string, sessionI
     });
   }
 
-  // Get answered questions
+  const difficultyMode = session.difficulty_mode || "auto"; // ✅ الصح
+
   const { data: answeredQuestions } = await supabaseService
     .from("user_answers")
     .select("question_id")
@@ -247,7 +237,6 @@ async function handleNextQuestion(supabaseService: any, userId: string, sessionI
     });
   }
 
-  // Get all questions for this course
   const { data: questions } = await supabaseService
     .from("questions")
     .select(`id, content, explanation, difficulty, skill_id, answer_options(id, content, is_correct, order_index)`)
@@ -261,32 +250,32 @@ async function handleNextQuestion(supabaseService: any, userId: string, sessionI
     });
   }
 
-  // ===== BKT-based Question Selection =====
-  // Get user's mastery level for the skills in this course
-  const skillIds = [...new Set(remaining.map((q: any) => q.skill_id).filter(Boolean))];
+  // ===== Question Selection Based on Mode =====
+  let targetDifficulty = "medium";
 
-  let targetDifficulty = "easy";
+  if (difficultyMode === "auto") {
+    const skillIds = [...new Set(remaining.map((q: any) => q.skill_id).filter(Boolean))];
+    if (skillIds.length > 0) {
+      const { data: skillLevels } = await supabaseService
+        .from("user_skill_levels")
+        .select("skill_id, mastery_level")
+        .eq("user_id", userId)
+        .in("skill_id", skillIds);
 
-  if (skillIds.length > 0) {
-    const { data: skillLevels } = await supabaseService
-      .from("user_skill_levels")
-      .select("skill_id, mastery_level")
-      .eq("user_id", userId)
-      .in("skill_id", skillIds);
-
-    if (skillLevels && skillLevels.length > 0) {
-      // Average mastery across all skills
-      const avgMastery = skillLevels.reduce((sum: number, s: any) => sum + s.mastery_level, 0) / skillLevels.length;
-      targetDifficulty = masteryToDifficulty(avgMastery);
-      console.log(`BKT avg mastery: ${avgMastery.toFixed(3)} → target difficulty: ${targetDifficulty}`);
-    } else {
-      // No history yet → start with easy
-      targetDifficulty = "easy";
-      console.log("No mastery history → starting with easy");
+      if (skillLevels && skillLevels.length > 0) {
+        const avgMastery = skillLevels.reduce((sum: number, s: any) => sum + s.mastery_level, 0) / skillLevels.length;
+        targetDifficulty = masteryToDifficulty(avgMastery);
+        console.log(`BKT auto: mastery=${avgMastery.toFixed(3)} → ${targetDifficulty}`);
+      } else {
+        targetDifficulty = "medium";
+      }
     }
+  } else {
+    // Manual mode
+    targetDifficulty = difficultyMode;
+    console.log(`Manual mode: ${targetDifficulty}`);
   }
 
-  // Pick from target difficulty, fallback to any
   const preferred = remaining.filter((q: any) => q.difficulty === targetDifficulty);
   const pool = preferred.length > 0 ? preferred : remaining;
   const nextQuestion = pool[Math.floor(Math.random() * pool.length)];

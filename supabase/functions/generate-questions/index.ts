@@ -9,9 +9,7 @@ const corsHeaders = {
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response("ok", {
-      headers: corsHeaders,
-    });
+    return new Response("ok", { headers: corsHeaders });
   }
 
   try {
@@ -20,273 +18,190 @@ serve(async (req: Request) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // =============================
-    // AUTH USER
-    // =============================
-
+    // ===== AUTH =====
     const authHeader = req.headers.get("Authorization");
-
     if (!authHeader) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Missing authorization header",
-        }),
-        {
-          status: 401,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Missing authorization header" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const token = authHeader.replace("Bearer ", "");
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser(token);
-
+    const { data: { user }, error: userError } = await supabase.auth.getUser(token);
     if (userError || !user) {
-      return new Response(
-        JSON.stringify({
-          success: false,
-          error: "Unauthorized user",
-        }),
-        {
-          status: 401,
-          headers: {
-            ...corsHeaders,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      return new Response(JSON.stringify({ success: false, error: "Unauthorized user" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
-    const userId = user.id;
+    // ===== REQUEST BODY =====
+    const { skill_id, course_id, difficulty = "medium", count = 10 } = await req.json();
 
-    // =============================
-    // REQUEST BODY
-    // =============================
+    // ===== GET SKILL + COURSE =====
+    const { data: skill } = await supabase.from("skills").select("*").eq("id", skill_id).single();
+    const { data: course } = await supabase.from("courses").select("*").eq("id", course_id).single();
 
-const {
-  skill_id,
-  course_id,
-  difficulty = "medium",
-  count = 5,
-} = await req.json();
+    const topic = skill?.name || "General Topic";
+    const subCategory = course?.sub_category || "general";
+    const examType = course?.title || "General Exam";
 
-// =============================
-// GET SKILL + COURSE DATA
-// =============================
-
-const { data: skill } = await supabase
-  .from("skills")
-  .select("*")
-  .eq("id", skill_id)
-  .single();
-
-const { data: course } = await supabase
-  .from("courses")
-  .select("*")
-  .eq("id", course_id)
-  .single();
-
-const topic = skill?.name || "General Topic";
-const examType = course?.title || "General Exam";
-const language = "Arabic";
-const numberOfQuestions = count;
-
-    // =============================
-    // GET USER HISTORY
-    // =============================
-
-    const { data: oldQuestions } = await supabase
+    // ===== GET EXISTING QUESTIONS (to avoid duplicates) =====
+    const { data: existingQuestions } = await supabase
       .from("questions")
       .select("content")
-      .eq("user_id", userId)
-      .limit(50);
+      .eq("course_id", course_id)
+      .limit(100);
 
-    const previousQuestions =
-      oldQuestions
-        ?.map((q: any) => q.content)
-        .join("\n") || "No previous questions";
+    const existingContents = (existingQuestions || [])
+      .map((q: any) => q.content)
+      .join("\n")
+      .slice(0, 3000);
 
-    // =============================
-    // OPENAI REQUEST
-    // =============================
+    // ===== OPENAI REQUEST =====
+    const categoryMap: Record<string, string> = {
+      verbal: "اختبار القدرات العامة - الجزء اللفظي",
+      quantitative: "اختبار القدرات العامة - الجزء الكمي",
+      mathematics: "الرياضيات - الثانوية العامة",
+      physics: "الفيزياء - الثانوية العامة",
+      chemistry: "الكيمياء - الثانوية العامة",
+      biology: "الأحياء - الثانوية العامة",
+      ccna: "CCNA - شهادة تقنية",
+      security: "CompTIA Security+",
+      aws: "AWS Cloud Practitioner",
+      pmp: "PMP - إدارة المشاريع",
+    };
 
-    const openAiResponse = await fetch(
-      "https://api.openai.com/v1/chat/completions",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${Deno.env.get("OPENAI_API_KEY")}`,
-        },
-        body: JSON.stringify({
-          model: "gpt-4o-mini",
-          temperature: 0.9,
-          response_format: {
-            type: "json_object",
-          },
-          messages: [
-            {
-              role: "system",
-              content: `
-You are an advanced AI exam question generator.
+    const difficultyMap: Record<string, string> = {
+      easy: "سهل - أسئلة أساسية للمبتدئين",
+      medium: "متوسط - أسئلة تتطلب فهماً جيداً",
+      hard: "صعب - أسئلة متقدمة تتطلب تفكيراً عميقاً",
+    };
 
-Generate UNIQUE and NON-REPETITIVE questions every time.
-Never repeat wording, ideas, or patterns.
-Questions must adapt to the user's difficulty level.
-Create realistic and varied exam-style questions.
+    const openAiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${Deno.env.get("OPENAI_API_KEY")}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        temperature: 0.9,
+        response_format: { type: "json_object" },
+        messages: [
+          {
+            role: "system",
+            content: `أنت خبير في إعداد أسئلة الاختبارات السعودية القياسية (قدرات وتحصيلي).
+قم بتوليد أسئلة فريدة ومتنوعة باللغة العربية.
+أجب بـ JSON فقط بدون أي نص إضافي.
 
-Return ONLY valid JSON.
-
-Expected JSON format:
-
+الصيغة المطلوبة:
 {
   "questions": [
     {
-      "question": "...",
-      "options": ["A", "B", "C", "D"],
-      "correct_answer": "...",
-      "explanation": "..."
+      "content": "نص السؤال",
+      "explanation": "شرح مفصل وتعليمي",
+      "options": [
+        { "content": "الخيار الأول", "is_correct": false },
+        { "content": "الخيار الصحيح", "is_correct": true },
+        { "content": "الخيار الثالث", "is_correct": false },
+        { "content": "الخيار الرابع", "is_correct": false }
+      ]
     }
   ]
-}
-`,
-            },
-            {
-              role: "user",
-              content: `
-Generate ${numberOfQuestions} ${difficulty} difficulty questions.
+}`,
+          },
+          {
+            role: "user",
+            content: `قم بتوليد ${count} سؤال جديد وفريد.
 
-Language: ${language}
-Exam Type: ${examType}
-Topic: ${topic}
+المادة: ${categoryMap[subCategory] || examType}
+الموضوع: ${topic}
+مستوى الصعوبة: ${difficultyMap[difficulty] || difficulty}
 
-IMPORTANT:
-Avoid generating anything similar to these previous questions:
+الأسئلة الموجودة مسبقاً (تجنب التكرار):
+${existingContents || "لا توجد أسئلة مسبقة"}
 
-${previousQuestions}
-`,
-            },
-          ],
-        }),
-      }
-    );
-
-    // =============================
-    // VALIDATE OPENAI RESPONSE
-    // =============================
+متطلبات مهمة:
+- ${count} أسئلة مختلفة وفريدة تماماً
+- لا تكرر أي سؤال موجود
+- 4 خيارات لكل سؤال
+- إجابة صحيحة واحدة فقط
+- باللغة العربية فقط
+- الشرح تعليمي ومفيد ومفصل`,
+          },
+        ],
+      }),
+    });
 
     if (!openAiResponse.ok) {
       const errorText = await openAiResponse.text();
-
       console.error("OpenAI API Error:", errorText);
-
       throw new Error("Failed to generate questions from OpenAI");
     }
 
     const openAiData = await openAiResponse.json();
+    const aiContent = openAiData?.choices?.[0]?.message?.content;
+    if (!aiContent) throw new Error("No content returned from AI");
 
-    const aiContent =
-      openAiData?.choices?.[0]?.message?.content;
-
-    if (!aiContent) {
-      console.error(openAiData);
-
-      throw new Error("No content returned from AI");
-    }
-
-    // =============================
-    // PARSE JSON
-    // =============================
-
+    // ===== PARSE JSON =====
     let parsed: any;
-
     try {
       parsed = JSON.parse(aiContent);
-    } catch (parseError) {
-      console.error("JSON Parse Error:", parseError);
-      console.error("AI Content:", aiContent);
-
+    } catch {
       throw new Error("Invalid AI JSON response");
     }
 
     const generatedQuestions = parsed.questions || [];
+    if (!generatedQuestions.length) throw new Error("No questions generated");
 
-    if (!generatedQuestions.length) {
-      throw new Error("No questions generated");
-    }
-
+    // ===== SAVE TO DATABASE =====
     const insertedQuestions = [];
 
-    // =============================
-    // SAVE QUESTIONS
-    // =============================
-
     for (const q of generatedQuestions) {
-      // SKIP INVALID QUESTIONS
-      if (!q.question || !q.correct_answer) {
-        continue;
-      }
+      if (!q.content || !q.options) continue;
 
-      // CHECK DUPLICATES FOR SAME USER ONLY
+      // Check for duplicates
       const { data: duplicate } = await supabase
         .from("questions")
         .select("id")
-        .eq("user_id", userId)
-        .eq("content", q.question)
+        .eq("course_id", course_id)
+        .eq("content", q.content)
         .maybeSingle();
 
-      if (duplicate) {
-        console.log("Duplicate skipped:", q.question);
-        continue;
-      }
+      if (duplicate) continue;
 
+      // Insert question
       const { data: inserted, error: insertError } = await supabase
         .from("questions")
         .insert({
-          user_id: userId,
-
-          content: q.question,
-
-          options: Array.isArray(q.options)
-            ? q.options
-            : ["Option A", "Option B", "Option C", "Option D"],
-
-          correct_answer: q.correct_answer,
-
-          explanation:
-            q.explanation ||
-            "Explanation will be generated later.",
-
-          topic,
+          skill_id,
+          course_id,
+          content: q.content,
+          explanation: q.explanation || "",
           difficulty,
-          exam_type: examType,
-          language,
           is_ai_generated: true,
         })
         .select()
         .single();
 
-      if (insertError) {
+      if (insertError || !inserted) {
         console.error("Insert Error:", insertError);
         continue;
       }
 
-      if (inserted) {
-        insertedQuestions.push(inserted);
-      }
-    }
+      // Insert answer options
+      const options = (q.options || []).map((opt: any, idx: number) => ({
+        question_id: inserted.id,
+        content: opt.content,
+        is_correct: opt.is_correct,
+        order_index: idx,
+      }));
 
-    // =============================
-    // FINAL RESPONSE
-    // =============================
+      const { error: optError } = await supabase.from("answer_options").insert(options);
+      if (!optError) insertedQuestions.push(inserted);
+    }
 
     return new Response(
       JSON.stringify({
@@ -294,28 +209,14 @@ ${previousQuestions}
         count: insertedQuestions.length,
         questions: insertedQuestions,
       }),
-      {
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-      }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
+
   } catch (error: any) {
     console.error("Function Error:", error);
-
     return new Response(
-      JSON.stringify({
-        success: false,
-        error: error?.message || "Unknown server error",
-      }),
-      {
-        status: 500,
-        headers: {
-          ...corsHeaders,
-          "Content-Type": "application/json",
-        },
-      }
+      JSON.stringify({ success: false, error: error?.message || "Unknown server error" }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });
