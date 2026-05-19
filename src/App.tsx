@@ -18,6 +18,7 @@ import ProfilePage from "./components/ProfilePage";
 import ReportsPage from "./components/ReportsPage";
 import SettingsPage from "./components/SettingsPage";
 import NotFound from "./pages/NotFound";
+import ChatBot from "./components/ChatBot";
 
 const queryClient = new QueryClient();
 
@@ -103,6 +104,7 @@ const App = () => (
         </LanguageProvider>
       </BrowserRouter>
     </TooltipProvider>
+    <ChatBot />
   </QueryClientProvider>
 );
 

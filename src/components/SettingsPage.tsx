@@ -261,6 +261,50 @@ const SettingsPage = () => {
           </CardContent>
         </Card>
 
+{/* Dark Mode */}
+<Card className="bg-card/80 border border-border/30">
+  <CardHeader>
+    <div className="flex items-center gap-3">
+      <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-500 to-purple-500/40">
+        <Globe className="w-5 h-5 text-foreground" />
+      </div>
+      <div>
+        <CardTitle className="text-lg">
+          {language === "ar" ? "المظهر" : "Appearance"}
+        </CardTitle>
+        <CardDescription>
+          {language === "ar" ? "اختر مظهر الموقع" : "Choose your theme"}
+        </CardDescription>
+      </div>
+    </div>
+  </CardHeader>
+  <CardContent>
+    <div className="flex gap-3">
+      <button
+  onClick={() => {
+  document.documentElement.classList.remove("dark");
+  document.documentElement.classList.add("light");
+  localStorage.setItem("theme", "light");
+}}
+  className="flex-1 py-3 rounded-xl border text-sm font-semibold"
+>
+  {language === "ar" ? "☀️ نهاري" : "☀️ Light"}
+</button>
+<button
+  onClick={() => {
+  document.documentElement.classList.remove("light");
+  document.documentElement.classList.add("dark");
+  localStorage.setItem("theme", "dark");
+}}
+  className="flex-1 py-3 rounded-xl border text-sm font-semibold"
+>
+  {language === "ar" ? "🌙 ليلي" : "🌙 Dark"}
+</button>
+    </div>
+  </CardContent>
+</Card>
+
+
         {/* Account Info */}
         <Card className="bg-card/80 border border-border/30">
           <CardHeader>

@@ -69,6 +69,15 @@ All colors MUST be HSL.
     --sidebar-ring: 330 85% 60%;
   }
 
+  .light {
+  --background: 0 0% 100%;
+  --foreground: 0 0% 5%;
+  --card: 0 0% 95%;
+  --card-foreground: 0 0% 5%;
+  --muted: 0 0% 90%;
+  --muted-foreground: 0 0% 40%;
+  --border: 0 0% 80%;
+}
   .dark {
     --background: 0 0% 5%;
     --foreground: 0 0% 100%;
