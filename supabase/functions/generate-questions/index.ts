@@ -1,5 +1,15 @@
+<<<<<<< Updated upstream
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
+=======
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+>>>>>>> Stashed changes
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -20,6 +30,7 @@ serve(async (req: Request) => {
 
     // ===== AUTH =====
     const authHeader = req.headers.get("Authorization");
+<<<<<<< Updated upstream
     if (!authHeader) {
       return new Response(JSON.stringify({ success: false, error: "Missing authorization header" }), {
         status: 401,
@@ -220,3 +231,320 @@ ${existingContents || "لا توجد أسئلة مسبقة"}
     );
   }
 });
+=======
+
+    if (!authHeader?.startsWith("Bearer ")) {
+      return new Response(
+        JSON.stringify({ error: "Unauthorized" }),
+        {
+          status: 401,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const supabase = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      {
+        global: {
+          headers: {
+            Authorization: authHeader,
+          },
+        },
+      }
+    );
+
+    const body = await req.json();
+
+    const {
+      skill_id,
+      course_id,
+      difficulty = "medium",
+      count = 5,
+      language = "ar",
+    } = body;
+
+    if (!skill_id || !course_id) {
+      return new Response(
+        JSON.stringify({
+          error: "skill_id and course_id are required",
+        }),
+        {
+          status: 400,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    // =========================
+    // GET SKILL
+    // =========================
+
+    const { data: skill } = await supabase
+      .from("skills")
+      .select("*")
+      .eq("id", skill_id)
+      .single();
+
+    // =========================
+    // GET COURSE
+    // =========================
+
+    const { data: course } = await supabase
+      .from("courses")
+      .select("*")
+      .eq("id", course_id)
+      .single();
+
+    if (!skill || !course) {
+      return new Response(
+        JSON.stringify({
+          error: "Skill or course not found",
+        }),
+        {
+          status: 404,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    // =========================
+    // OPENAI
+    // =========================
+
+    const apiKey = Deno.env.get("OPENAI_API_KEY");
+
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({
+          error: "OPENAI_API_KEY missing",
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const prompt = buildQuestionPrompt(
+      course,
+      skill,
+      difficulty,
+      count,
+      language
+    );
+
+    const aiResponse = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: Bearer ${apiKey},
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "system",
+              content:
+                language === "ar"
+                  ? "أنت خبير في إنشاء أسئلة تعليمية عالية الجودة. أعد فقط JSON صالح بدون markdown."
+                  : "You are an expert educational question generator. Return valid JSON only without markdown.",
+            },
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+          response_format: {
+            type: "json_object",
+          },
+          temperature: 0.8,
+        }),
+      }
+    );
+
+    if (!aiResponse.ok) {
+      const errorText = await aiResponse.text();
+
+      return new Response(
+        JSON.stringify({
+          error: "OpenAI request failed",
+          details: errorText,
+        }),
+        {
+          status: 500,
+          headers: {
+            ...corsHeaders,
+            "Content-Type": "application/json",
+          },
+        }
+      );
+    }
+
+    const aiData = await aiResponse.json();
+
+    const parsed = JSON.parse(
+      aiData.choices[0].message.content
+    );
+
+    const generatedQuestions = parsed.questions || [];
+
+    const savedQuestions = [];
+
+    for (const q of generatedQuestions) {
+      const { data: savedQuestion, error: questionError } =
+        await supabase
+          .from("questions")
+          .insert({
+            skill_id,
+            course_id,
+            content: q.content,
+            explanation: q.explanation,
+            difficulty,
+            is_ai_generated: true,
+          })
+          .select()
+          .single();
+
+      if (questionError || !savedQuestion) {
+        continue;
+      }
+
+      const options = (q.options || []).map(
+        (option: any, index: number) => ({
+          question_id: savedQuestion.id,
+          content: option.content,
+          is_correct: option.is_correct,
+          order_index: index,
+        })
+      );
+
+      await supabase
+        .from("answer_options")
+        .insert(options);
+
+      const { data: savedOptions } = await supabase
+        .from("answer_options")
+        .select("*")
+        .eq("question_id", savedQuestion.id);
+
+      savedQuestions.push({
+        ...savedQuestion,
+        answer_options: savedOptions,
+      });
+    }
+
+    return new Response(
+      JSON.stringify({
+        questions: savedQuestions,
+      }),
+      {
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error: any) {
+    return new Response(
+      JSON.stringify({
+        error: error.message,
+      }),
+      {
+        status: 500,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  }
+});
+
+function buildQuestionPrompt(
+  course: any,
+  skill: any,
+  difficulty: string,
+  count: number,
+  language: string
+) {
+  if (language === "ar") {
+    return `
+أنشئ ${count} أسئلة اختيار من متعدد باللغة العربية.
+
+المادة: ${course.title}
+المهارة: ${skill.name}
+الصعوبة: ${difficulty}
+
+الشروط:
+- 4 خيارات لكل سؤال
+- خيار واحد صحيح فقط
+- أضف شرح للإجابة
+- الأسئلة تكون ذكية وليست حفظ فقط
+
+أعد JSON بهذا الشكل فقط:
+
+{
+  "questions": [
+    {
+      "content": "السؤال",
+      "explanation": "الشرح",
+      "options": [
+        {
+          "content": "خيار",
+          "is_correct": true
+        }
+      ]
+    }
+  ]
+}
+`;
+  }
+
+  return `
+Generate ${count} multiple choice questions in English.
+
+Subject: ${course.title}
+Skill: ${skill.name}
+Difficulty: ${difficulty}
+
+Requirements:
+- 4 options per question
+- Exactly one correct answer
+- Include explanation
+- Questions should test understanding
+
+Return JSON only in this format:
+
+{
+  "questions": [
+    {
+      "content": "Question",
+      "explanation": "Explanation",
+      "options": [
+        {
+          "content": "Option",
+          "is_correct": true
+        }
+      ]
+    }
+  ]
+}
+`;
+}
+>>>>>>> Stashed changes
