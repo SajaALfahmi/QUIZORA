@@ -436,7 +436,7 @@ ${existingContents || "لا يوجد"}
     );
   }
 });
-=======
+
 
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -752,4 +752,3 @@ Return JSON only in this format:
 }
 `;
 }
->>>>>>> Stashed changes
