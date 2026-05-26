@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { adaptiveEngine, aiService } from "@/services/adaptiveEngine";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
-import logo from "@/assets/logo.png";
 
 interface Question {
   id: string;
@@ -52,6 +51,13 @@ const QuestionsPage = () => {
   const timerRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // State إضافي لعرض معلومات التكيف
+  const [adaptiveInfo, setAdaptiveInfo] = useState<{
+    current_difficulty: string;
+    recent_correct: number;
+    recent_total: number;
+  } | null>(null);
+
   useEffect(() => {
     totalIntervalRef.current = setInterval(() => { totalTimerRef.current += 1; }, 1000);
     return () => {
@@ -70,32 +76,45 @@ const QuestionsPage = () => {
         return;
       }
 
-      // ✅ Pass difficulty to session
+      // تمرير وضع الصعوبة للـ session
       const result = await adaptiveEngine.startSession(courseId, selectedCount, selectedDifficulty);
       setSessionId(result.session.id);
-      await fetchNextQuestion(result.session.id);
+      await fetchNextQuestion(result.session.id, selectedDifficulty);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       navigate("/courses");
     }
   };
 
-  const fetchNextQuestion = async (sid: string) => {
+  const fetchNextQuestion = async (sid: string, diffMode?: string) => {
     try {
-      setIsLoading(true); setShowResult(false); setSelectedAnswer(""); setExplanation(null); setLastResult(null);
+      setIsLoading(true);
+      setShowResult(false);
+      setSelectedAnswer("");
+      setExplanation(null);
+      setLastResult(null);
+      setAdaptiveInfo(null);
+
       if (questionNumber >= selectedCount) { setFinished(true); setIsLoading(false); return; }
-      const result = await adaptiveEngine.getNextQuestion(sid);
+
+      const result = await adaptiveEngine.getNextQuestion(sid, diffMode || selectedDifficulty);
+
       if (result.finished) { setFinished(true); setIsLoading(false); return; }
       if (!result.question) {
         throw new Error("No question returned from adaptive engine.");
       }
+
       setCurrentQuestion(result.question);
+      if (result.adaptive_info) setAdaptiveInfo(result.adaptive_info);
       setQuestionNumber((p) => p + 1);
       setIsLoading(false);
       timerRef.current = 0;
       if (intervalRef.current) clearInterval(intervalRef.current);
       intervalRef.current = setInterval(() => { timerRef.current += 1; }, 1000);
-    } catch (error: any) { toast({ title: "Error", description: error.message, variant: "destructive" }); setIsLoading(false); }
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      setIsLoading(false);
+    }
   };
 
   const handleSubmitAnswer = async () => {
@@ -103,12 +122,22 @@ const QuestionsPage = () => {
     setIsSubmitting(true);
     if (intervalRef.current) clearInterval(intervalRef.current);
     try {
-      const result = await adaptiveEngine.submitAnswer({ session_id: sessionId, question_id: currentQuestion.id, selected_option_id: selectedAnswer, time_spent_seconds: timerRef.current });
-      setLastResult(result); setShowResult(true);
+      const result = await adaptiveEngine.submitAnswer({
+        session_id: sessionId,
+        question_id: currentQuestion.id,
+        selected_option_id: selectedAnswer,
+        time_spent_seconds: timerRef.current,
+      });
+      setLastResult(result);
+      setShowResult(true);
       if (result.is_correct) setTotalCorrect((p) => p + 1);
+      // عرض الشرح تلقائياً إذا كان موجوداً في الرد
       if (result.explanation) setExplanation(result.explanation);
-    } catch (error: any) { toast({ title: "Error", description: error.message, variant: "destructive" }); }
-    finally { setIsSubmitting(false); }
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleGetExplanation = async () => {
@@ -117,10 +146,17 @@ const QuestionsPage = () => {
     try {
       const selectedOpt = currentQuestion.answer_options.find((o) => o.id === selectedAnswer);
       const correctOpt = currentQuestion.answer_options.find((o) => o.is_correct);
-      const result = await aiService.generateExplanation({ question_id: currentQuestion.id, user_answer: selectedOpt?.content, correct_answer: correctOpt?.content });
+      const result = await aiService.generateExplanation({
+        question_id: currentQuestion.id,
+        user_answer: selectedOpt?.content,
+        correct_answer: correctOpt?.content,
+      });
       setExplanation(result.explanation);
-    } catch (error: any) { toast({ title: "Error", description: error.message, variant: "destructive" }); }
-    finally { setLoadingExplanation(false); }
+    } catch (error: any) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } finally {
+      setLoadingExplanation(false);
+    }
   };
 
   const handleNext = () => {
@@ -129,13 +165,15 @@ const QuestionsPage = () => {
       setFinished(true);
       return;
     }
-    if (sessionId) fetchNextQuestion(sessionId);
+    if (sessionId) fetchNextQuestion(sessionId, selectedDifficulty);
   };
 
   const handleEndSession = async () => {
     if (totalIntervalRef.current) clearInterval(totalIntervalRef.current);
     if (sessionId) await adaptiveEngine.endSession(sessionId);
-    navigate("/evaluation", { state: { totalQuestions: questionNumber, totalCorrect, sessionId, timeSpentSeconds: totalTimerRef.current } });
+    navigate("/evaluation", {
+      state: { totalQuestions: questionNumber, totalCorrect, sessionId, timeSpentSeconds: totalTimerRef.current },
+    });
   };
 
   const difficultyLabel = (d: DifficultyOption) => {
@@ -147,19 +185,21 @@ const QuestionsPage = () => {
 
   const estimatedTime = selectedCount * 2;
 
-  // Quiz Settings Screen
+  // ─── Quiz Settings Screen ───────────────────────────────────────────────────
   if (showSettings) {
     return (
       <div className="min-h-screen bg-background flex flex-col">
         <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
           <div className="flex items-center justify-between px-6 py-3">
-            <div className="flex items-center gap-2">
-              <img src={logo} alt="Quizora" className="w-8 h-8 object-contain" />
-              <span className="text-lg font-bold text-foreground hidden sm:inline">Quizora</span>
+            <div className="flex items-center gap-3">
+              <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30">
+                <BookOpen className="w-5 h-5 text-primary" />
+              </div>
+              <span className="text-lg font-bold text-primary">Quizora</span>
             </div>
-            <div className="flex items-center gap-4">
-              <button onClick={() => navigate("/dashboard")} className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground"><Home className="w-5 h-5" /></button>
-            </div>
+            <button onClick={() => navigate("/dashboard")} className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground">
+              <Home className="w-5 h-5" />
+            </button>
           </div>
         </header>
 
@@ -177,7 +217,6 @@ const QuestionsPage = () => {
             </div>
           </div>
 
-          {/* Settings */}
           <div className="space-y-6">
             <div className="flex items-center gap-2 mb-2">
               <Settings className="w-5 h-5 text-foreground" />
@@ -192,12 +231,13 @@ const QuestionsPage = () => {
                   <button
                     key={d}
                     onClick={() => setSelectedDifficulty(d)}
-                    className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${selectedDifficulty === d
-                      ? d === "auto"
-                        ? "bg-gradient-to-r from-primary to-secondary text-foreground shadow-lg"
-                        : "bg-primary text-primary-foreground shadow-lg"
-                      : "bg-muted/40 text-muted-foreground hover:bg-muted/60 border border-border/30"
-                      }`}
+                    className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                      selectedDifficulty === d
+                        ? d === "auto"
+                          ? "bg-gradient-to-r from-primary to-secondary text-foreground shadow-lg"
+                          : "bg-primary text-primary-foreground shadow-lg"
+                        : "bg-muted/40 text-muted-foreground hover:bg-muted/60 border border-border/30"
+                    }`}
                   >
                     {difficultyLabel(d)}
                   </button>
@@ -216,10 +256,11 @@ const QuestionsPage = () => {
                   <button
                     key={count}
                     onClick={() => setSelectedCount(count)}
-                    className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${selectedCount === count
-                      ? "bg-accent text-accent-foreground shadow-lg"
-                      : "bg-muted/40 text-muted-foreground hover:bg-muted/60 border border-border/30"
-                      }`}
+                    className={`px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                      selectedCount === count
+                        ? "bg-accent text-accent-foreground shadow-lg"
+                        : "bg-muted/40 text-muted-foreground hover:bg-muted/60 border border-border/30"
+                    }`}
                   >
                     {count}
                   </button>
@@ -274,29 +315,45 @@ const QuestionsPage = () => {
           </div>
         </div>
 
-        <footer className="border-t border-border/50 bg-muted/30 py-4 text-center"><p className="text-sm text-muted-foreground">© 2026 Quizora. All rights reserved.</p></footer>
+        <footer className="border-t border-border/50 bg-muted/30 py-4 text-center">
+          <p className="text-sm text-muted-foreground">© 2026 Quizora. All rights reserved.</p>
+        </footer>
       </div>
     );
   }
 
-  // Session Complete Screen
+  // ─── Session Complete Screen ────────────────────────────────────────────────
   if (finished) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
         <Card className="max-w-md w-full bg-card/80 border border-border/30 text-center">
           <CardHeader>
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mx-auto mb-4"><Check className="w-8 h-8 text-foreground" /></div>
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center mx-auto mb-4">
+              <Check className="w-8 h-8 text-foreground" />
+            </div>
             <CardTitle className="text-2xl">{t("questions.sessionComplete")}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 rounded-xl bg-muted/30"><p className="text-2xl font-bold text-primary">{questionNumber}</p><p className="text-sm text-muted-foreground">{t("questions.questionsLabel")}</p></div>
-              <div className="p-4 rounded-xl bg-muted/30"><p className="text-2xl font-bold text-green-500">{totalCorrect}</p><p className="text-sm text-muted-foreground">{t("questions.correct")}</p></div>
+              <div className="p-4 rounded-xl bg-muted/30">
+                <p className="text-2xl font-bold text-primary">{questionNumber}</p>
+                <p className="text-sm text-muted-foreground">{t("questions.questionsLabel")}</p>
+              </div>
+              <div className="p-4 rounded-xl bg-muted/30">
+                <p className="text-2xl font-bold text-green-500">{totalCorrect}</p>
+                <p className="text-sm text-muted-foreground">{t("questions.correct")}</p>
+              </div>
             </div>
-            <p className="text-lg font-semibold">{t("questions.accuracy")}: {questionNumber > 0 ? Math.round((totalCorrect / questionNumber) * 100) : 0}%</p>
+            <p className="text-lg font-semibold">
+              {t("questions.accuracy")}: {questionNumber > 0 ? Math.round((totalCorrect / questionNumber) * 100) : 0}%
+            </p>
             <div className="flex gap-3">
-              <Button variant="outline" className="flex-1 rounded-xl" onClick={() => navigate("/courses")}>{t("questions.backToCourses")}</Button>
-              <Button className="flex-1 rounded-xl bg-gradient-to-r from-primary to-secondary" onClick={handleEndSession}>{t("questions.viewReport")}</Button>
+              <Button variant="outline" className="flex-1 rounded-xl" onClick={() => navigate("/courses")}>
+                {t("questions.backToCourses")}
+              </Button>
+              <Button className="flex-1 rounded-xl bg-gradient-to-r from-primary to-secondary" onClick={handleEndSession}>
+                {t("questions.viewReport")}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -304,18 +361,24 @@ const QuestionsPage = () => {
     );
   }
 
-  // Quiz Screen
+  // ─── Quiz Screen ────────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-2">
-            <img src={logo} alt="Quizora" className="w-8 h-8 object-contain" />
-            <span className="text-lg font-bold text-foreground hidden sm:inline">Quizora</span>
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30">
+              <BookOpen className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-lg font-bold text-primary">Quizora</span>
           </div>
           <div className="flex items-center gap-4">
-            <button onClick={() => navigate("/dashboard")} className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground"><Home className="w-5 h-5" /></button>
-            <div className="text-sm text-muted-foreground">Q{questionNumber}/{selectedCount} · {totalCorrect} {t("questions.correct").toLowerCase()}</div>
+            <button onClick={() => navigate("/dashboard")} className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground">
+              <Home className="w-5 h-5" />
+            </button>
+            <div className="text-sm text-muted-foreground">
+              Q{questionNumber}/{selectedCount} · {totalCorrect} {t("questions.correct").toLowerCase()}
+            </div>
           </div>
         </div>
       </header>
@@ -328,49 +391,102 @@ const QuestionsPage = () => {
             </button>
             <div>
               <h1 className="text-lg font-bold text-foreground">{courseName || t("questions.adaptiveQuiz")}</h1>
-              <p className="text-sm text-muted-foreground">{difficultyLabel(selectedDifficulty)} · {selectedCount} {t("questions.questionsLabel")}</p>
+              <p className="text-sm text-muted-foreground">
+                {difficultyLabel(selectedDifficulty)} · {selectedCount} {t("questions.questionsLabel")}
+              </p>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="rounded-xl" onClick={handleEndSession}>{t("questions.endSession")}</Button>
+          <Button variant="outline" size="sm" className="rounded-xl" onClick={handleEndSession}>
+            {t("questions.endSession")}
+          </Button>
         </div>
         {/* Progress bar */}
         <div className="mt-3 w-full bg-muted/30 rounded-full h-2">
-          <div className="bg-gradient-to-r from-primary to-secondary h-2 rounded-full transition-all duration-500" style={{ width: `${(questionNumber / selectedCount) * 100}%` }} />
+          <div
+            className="bg-gradient-to-r from-primary to-secondary h-2 rounded-full transition-all duration-500"
+            style={{ width: `${(questionNumber / selectedCount) * 100}%` }}
+          />
         </div>
       </div>
 
       <div className="flex-1 max-w-3xl mx-auto w-full px-6 py-10">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-20"><Loader2 className="w-8 h-8 animate-spin text-primary mb-4" /><p className="text-muted-foreground">{t("questions.loadingQuestion")}</p></div>
+          <div className="flex flex-col items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">{t("questions.loadingQuestion")}</p>
+          </div>
         ) : currentQuestion ? (
           <>
             <Card className="bg-card/80 border border-border/30 mb-6">
               <CardHeader>
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-foreground font-bold">{questionNumber}</div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${currentQuestion.difficulty === "easy" ? "bg-green-500/20 text-green-400" : currentQuestion.difficulty === "medium" ? "bg-yellow-500/20 text-yellow-400" : "bg-red-500/20 text-red-400"}`}>
-                    {currentQuestion.difficulty === "easy" ? t("questions.easy") : currentQuestion.difficulty === "medium" ? t("questions.medium") : t("questions.hard")}
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-foreground font-bold">
+                    {questionNumber}
+                  </div>
+
+                  {/* badge الصعوبة الحالية */}
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                    currentQuestion.difficulty === "easy"
+                      ? "bg-green-500/20 text-green-400"
+                      : currentQuestion.difficulty === "medium"
+                      ? "bg-yellow-500/20 text-yellow-400"
+                      : "bg-red-500/20 text-red-400"
+                  }`}>
+                    {currentQuestion.difficulty === "easy"
+                      ? t("questions.easy")
+                      : currentQuestion.difficulty === "medium"
+                      ? t("questions.medium")
+                      : t("questions.hard")}
                   </span>
+
+                  {/* مؤشر التكيف — يظهر فقط في وضع auto بعد سؤالين */}
+                  {selectedDifficulty === "auto" && adaptiveInfo && adaptiveInfo.recent_total >= 2 && (
+                    <span className="px-3 py-1 rounded-full text-xs font-medium bg-primary/15 text-primary border border-primary/20 flex items-center gap-1">
+                      <Sparkles className="w-3 h-3" />
+                      {adaptiveInfo.recent_correct}/{adaptiveInfo.recent_total}{" "}
+                      {language === "ar" ? "صحيح" : "correct"}
+                    </span>
+                  )}
                 </div>
-                <CardTitle className="text-xl leading-relaxed" dir="auto">{currentQuestion.content}</CardTitle>
+
+                <CardTitle className="text-xl leading-relaxed" dir="auto">
+                  {currentQuestion.content}
+                </CardTitle>
               </CardHeader>
+
               <CardContent>
-                <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer} className="space-y-3" disabled={showResult}>
-                  {currentQuestion.answer_options.sort((a, b) => a.order_index - b.order_index).map((opt) => {
-                    let optionStyle = "bg-muted/20 border-border/30 hover:bg-muted/40";
-                    if (showResult) {
-                      if (opt.is_correct) optionStyle = "bg-green-500/20 border-green-500/50";
-                      else if (opt.id === selectedAnswer && !opt.is_correct) optionStyle = "bg-red-500/20 border-red-500/50";
-                      else optionStyle = "bg-muted/10 border-border/20 opacity-60";
-                    } else if (selectedAnswer === opt.id) optionStyle = "bg-primary/10 border-primary/50";
-                    return (
-                      <div key={opt.id} className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${optionStyle}`} onClick={() => !showResult && setSelectedAnswer(opt.id)}>
-                        <RadioGroupItem value={opt.id} id={opt.id} />
-                        <Label htmlFor={opt.id} className="flex-1 cursor-pointer text-foreground" dir="auto">{opt.content}</Label>
-                        {showResult && opt.is_correct && <Check className="w-5 h-5 text-green-400" />}
-                      </div>
-                    );
-                  })}
+                <RadioGroup
+                  value={selectedAnswer}
+                  onValueChange={setSelectedAnswer}
+                  className="space-y-3"
+                  disabled={showResult}
+                >
+                  {currentQuestion.answer_options
+                    .sort((a, b) => a.order_index - b.order_index)
+                    .map((opt) => {
+                      let optionStyle = "bg-muted/20 border-border/30 hover:bg-muted/40";
+                      if (showResult) {
+                        if (opt.is_correct) optionStyle = "bg-green-500/20 border-green-500/50";
+                        else if (opt.id === selectedAnswer && !opt.is_correct)
+                          optionStyle = "bg-red-500/20 border-red-500/50";
+                        else optionStyle = "bg-muted/10 border-border/20 opacity-60";
+                      } else if (selectedAnswer === opt.id) {
+                        optionStyle = "bg-primary/10 border-primary/50";
+                      }
+                      return (
+                        <div
+                          key={opt.id}
+                          className={`flex items-center gap-4 p-4 rounded-xl border cursor-pointer transition-all ${optionStyle}`}
+                          onClick={() => !showResult && setSelectedAnswer(opt.id)}
+                        >
+                          <RadioGroupItem value={opt.id} id={opt.id} />
+                          <Label htmlFor={opt.id} className="flex-1 cursor-pointer text-foreground" dir="auto">
+                            {opt.content}
+                          </Label>
+                          {showResult && opt.is_correct && <Check className="w-5 h-5 text-green-400" />}
+                        </div>
+                      );
+                    })}
                 </RadioGroup>
               </CardContent>
             </Card>
@@ -378,11 +494,27 @@ const QuestionsPage = () => {
             {showResult && lastResult && (
               <Card className={`mb-6 border ${lastResult.is_correct ? "bg-green-500/10 border-green-500/30" : "bg-red-500/10 border-red-500/30"}`}>
                 <CardContent className="pt-6">
-                  <p className="text-lg font-bold mb-2" dir="auto">{lastResult.is_correct ? t("questions.correctAnswer") : t("questions.wrongAnswer")}</p>
-                  {explanation && <div className="mt-3 p-4 rounded-xl bg-muted/20 text-sm leading-relaxed" dir="auto">{explanation}</div>}
+                  <p className="text-lg font-bold mb-2" dir="auto">
+                    {lastResult.is_correct ? t("questions.correctAnswer") : t("questions.wrongAnswer")}
+                  </p>
+                  {explanation && (
+                    <div className="mt-3 p-4 rounded-xl bg-muted/20 text-sm leading-relaxed" dir="auto">
+                      {explanation}
+                    </div>
+                  )}
                   {!explanation && (
-                    <Button variant="outline" size="sm" className="mt-3 rounded-xl" onClick={handleGetExplanation} disabled={loadingExplanation}>
-                      {loadingExplanation ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("questions.generating")}</> : <><Lightbulb className="w-4 h-4 mr-2" />{t("questions.showExplanation")}</>}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-3 rounded-xl"
+                      onClick={handleGetExplanation}
+                      disabled={loadingExplanation}
+                    >
+                      {loadingExplanation ? (
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("questions.generating")}</>
+                      ) : (
+                        <><Lightbulb className="w-4 h-4 mr-2" />{t("questions.showExplanation")}</>
+                      )}
                     </Button>
                   )}
                 </CardContent>
@@ -391,12 +523,24 @@ const QuestionsPage = () => {
 
             <div className="flex justify-end gap-3">
               {!showResult ? (
-                <Button disabled={!selectedAnswer || isSubmitting} onClick={handleSubmitAnswer} className="rounded-xl bg-gradient-to-r from-primary to-secondary text-foreground font-semibold px-8">
-                  {isSubmitting ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("questions.checking")}</> : <><Check className="w-4 h-4 mr-2" />{t("questions.submitAnswer")}</>}
+                <Button
+                  disabled={!selectedAnswer || isSubmitting}
+                  onClick={handleSubmitAnswer}
+                  className="rounded-xl bg-gradient-to-r from-primary to-secondary text-foreground font-semibold px-8"
+                >
+                  {isSubmitting ? (
+                    <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{t("questions.checking")}</>
+                  ) : (
+                    <><Check className="w-4 h-4 mr-2" />{t("questions.submitAnswer")}</>
+                  )}
                 </Button>
               ) : (
-                <Button onClick={handleNext} className="rounded-xl bg-gradient-to-r from-primary to-secondary text-foreground font-semibold px-8">
-                  {t("questions.nextQuestion")} <ArrowRight className={`w-4 h-4 ${language === "ar" ? "mr-2 rotate-180" : "ml-2"}`} />
+                <Button
+                  onClick={handleNext}
+                  className="rounded-xl bg-gradient-to-r from-primary to-secondary text-foreground font-semibold px-8"
+                >
+                  {t("questions.nextQuestion")}
+                  <ArrowRight className={`w-4 h-4 ${language === "ar" ? "mr-2 rotate-180" : "ml-2"}`} />
                 </Button>
               )}
             </div>
@@ -404,7 +548,9 @@ const QuestionsPage = () => {
         ) : null}
       </div>
 
-      <footer className="border-t border-border/50 bg-muted/30 py-4 text-center"><p className="text-sm text-muted-foreground">© 2026 Quizora. All rights reserved.</p></footer>
+      <footer className="border-t border-border/50 bg-muted/30 py-4 text-center">
+        <p className="text-sm text-muted-foreground">© 2026 Quizora. All rights reserved.</p>
+      </footer>
     </div>
   );
 };

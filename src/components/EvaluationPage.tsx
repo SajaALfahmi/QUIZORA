@@ -12,9 +12,10 @@ const EvaluationPage = () => {
   const stats = useUserStats();
   const { t, language } = useLanguage();
   const location = useLocation();
-const { timeSpentSeconds = 0 } = (location.state as any) || {};
-const timeMinutes = Math.floor(timeSpentSeconds / 60);
-const timeSeconds = timeSpentSeconds % 60;
+  const { timeSpentSeconds = 0 } = (location.state as any) || {};
+  const timeMinutes = Math.floor(timeSpentSeconds / 60);
+  const timeSeconds = timeSpentSeconds % 60;
+  const isAr = language === "ar";
 
   if (stats.loading) {
     return <AppLayout><div className="flex items-center justify-center h-96"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div></AppLayout>;
@@ -30,13 +31,25 @@ const timeSeconds = timeSpentSeconds % 60;
     { name: t("eval.streak"), score: Math.min(100, stats.currentStreak * 10), icon: Star, color: "from-primary to-secondary/40" },
   ];
 
-  const getLabel = (score: number) => score >= 80 ? t("eval.strong") : score >= 60 ? t("eval.good") : t("eval.needsWork");
+  const getLabel = (score: number) => {
+    if (score >= 80) return isAr ? "ممتاز" : "Excellent";
+    if (score >= 70) return isAr ? "جيد جداً" : "Very Good";
+    if (score >= 60) return isAr ? "جيد" : "Good";
+    if (score >= 50) return isAr ? "مقبول" : "Acceptable";
+    return isAr ? "ضعيف" : "Weak";
+  };
+
+  const getLabelColor = (score: number) => {
+    if (score >= 80) return "bg-green-500/20 text-green-400";
+    if (score >= 70) return "bg-blue-500/20 text-blue-400";
+    if (score >= 60) return "bg-yellow-500/20 text-yellow-400";
+    if (score >= 50) return "bg-orange-500/20 text-orange-400";
+    return "bg-red-500/20 text-red-400";
+  };
 
   const strengths: string[] = [];
   const improvements: string[] = [];
   const recommendations: string[] = [];
-
-  const isAr = language === "ar";
 
   if (overallScore >= 70) strengths.push(isAr ? "دقة شاملة جيدة في جميع التقييمات" : "Good overall accuracy across assessments");
   if (stats.completedSessions >= 3) strengths.push(isAr ? `أكملت ${stats.completedSessions} جلسات تعلم` : `Completed ${stats.completedSessions} learning sessions`);
@@ -59,12 +72,12 @@ const timeSeconds = timeSpentSeconds % 60;
             <span className="text-4xl font-bold text-foreground">{overallScore}</span>
           </div>
           <h2 className="text-2xl font-bold text-foreground mb-2">{t("eval.overallScore")}</h2>
-          <Badge className="bg-accent/20 text-accent border-0 text-sm px-4 py-1 mb-3">{getLabel(overallScore)}</Badge>
+          <Badge className={`${getLabelColor(overallScore)} border-0 text-sm px-4 py-1 mb-3`}>{getLabel(overallScore)}</Badge>
           {timeSpentSeconds > 0 && (
-  <p className="text-muted-foreground mt-2">
-    ⏱ الوقت المستغرق: {timeMinutes}m {timeSeconds}s
-  </p>
-)}
+            <p className="text-muted-foreground mt-2">
+              ⏱ {isAr ? "الوقت المستغرق" : "Time Spent"}: {timeMinutes}m {timeSeconds}s
+            </p>
+          )}
           <p className="text-muted-foreground">{stats.totalCorrect} {t("eval.correctOutOf")} {stats.totalQuestions} {t("eval.questionsWord")}</p>
         </Card>
 
@@ -77,7 +90,7 @@ const timeSeconds = timeSpentSeconds % 60;
                 <p className="text-sm text-primary font-medium mb-1">{cat.name}</p>
                 <p className="text-3xl font-bold text-foreground mb-2">{cat.score}%</p>
                 <div className="h-2 bg-muted/30 rounded-full overflow-hidden mb-3"><div className={`h-full bg-gradient-to-r ${cat.color} rounded-full`} style={{ width: `${cat.score}%` }} /></div>
-                <Badge className={`${cat.score >= 80 ? "bg-accent/20 text-accent" : "bg-secondary/20 text-secondary"} border-0 text-xs`}>{getLabel(cat.score)}</Badge>
+                <Badge className={`${getLabelColor(cat.score)} border-0 text-xs`}>{getLabel(cat.score)}</Badge>
               </Card>
             );
           })}
@@ -89,8 +102,21 @@ const timeSeconds = timeSpentSeconds % 60;
             <CardContent className="space-y-4">
               {skillScores.map((s) => (
                 <div key={s.name}>
-                  <div className="flex justify-between text-sm mb-1"><span className="text-foreground font-medium">{s.name}</span><span className="text-muted-foreground">{s.score}%</span></div>
-                  <div className="h-2 bg-muted/30 rounded-full overflow-hidden"><div className="h-full bg-gradient-to-r from-primary to-secondary rounded-full" style={{ width: `${s.score}%` }} /></div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-foreground font-medium">{s.name}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">{s.score}%</span>
+                      <Badge className={`${getLabelColor(s.score)} border-0 text-xs px-2`}>{getLabel(s.score)}</Badge>
+                    </div>
+                  </div>
+                  <div className="h-2 bg-muted/30 rounded-full overflow-hidden">
+                    <div className={`h-full rounded-full ${
+                      s.score >= 80 ? "bg-green-500" :
+                      s.score >= 70 ? "bg-blue-500" :
+                      s.score >= 60 ? "bg-yellow-500" :
+                      s.score >= 50 ? "bg-orange-500" : "bg-red-500"
+                    }`} style={{ width: `${s.score}%` }} />
+                  </div>
                 </div>
               ))}
             </CardContent>

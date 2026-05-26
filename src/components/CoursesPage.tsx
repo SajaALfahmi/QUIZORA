@@ -5,11 +5,12 @@ import { Card } from "@/components/ui/card";
 import {
   Brain, BookOpen, Award, ArrowLeft, ArrowRight,
   Network, Shield, Cloud, Briefcase, Beaker, Atom, Calculator, FlaskConical,
-  Sparkles, Loader2, Globe, BookMarked, Microscope, GraduationCap
+  Sparkles, Loader2, Globe, BookMarked, Microscope, GraduationCap, RefreshCw
 } from "lucide-react";
 import AppLayout from "./layout/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useToast } from "@/hooks/use-toast";
 
 type Category = "qudurat" | "tahseeli" | "certifications";
 type TahseeliTrack = "scientific" | "literary" | null;
@@ -56,9 +57,9 @@ const courseMeta: Record<string, {
   },
   "CompTIA Security+": {
     icon: Shield,
-    iconBg: "bg-primary/20", iconColor: "text-primary",
-    borderColor: "border-primary/30", selectedBorder: "border-primary/80",
-    badgeKey: "badge.intermediate", badgeColor: "text-primary",
+    iconBg: "bg-blue-500/20", iconColor: "text-blue-400",
+    borderColor: "border-blue-500/30", selectedBorder: "border-blue-500/80",
+    badgeKey: "badge.intermediate", badgeColor: "text-blue-400",
     tagKeys: ["tag.threatManagement", "tag.cryptography", "tag.riskAssessment"],
   },
   "CCNA": {
@@ -91,74 +92,68 @@ const courseMeta: Record<string, {
   },
   "Physics": {
     icon: Atom,
-    iconBg: "bg-primary/20", iconColor: "text-primary",
-    borderColor: "border-primary/30", selectedBorder: "border-primary/80",
-    badgeKey: "badge.highSchool", badgeColor: "text-primary",
+    iconBg: "bg-cyan-500/20", iconColor: "text-cyan-400",
+    borderColor: "border-cyan-500/30", selectedBorder: "border-cyan-500/80",
+    badgeKey: "badge.highSchool", badgeColor: "text-cyan-400",
     tagKeys: ["tag.mechanics", "tag.electricity", "tag.waves"],
   },
   "Chemistry": {
     icon: FlaskConical,
-    iconBg: "bg-secondary/20", iconColor: "text-secondary",
-    borderColor: "border-secondary/30", selectedBorder: "border-secondary/80",
-    badgeKey: "badge.highSchool", badgeColor: "text-secondary",
+    iconBg: "bg-green-500/20", iconColor: "text-green-400",
+    borderColor: "border-green-500/30", selectedBorder: "border-green-500/80",
+    badgeKey: "badge.highSchool", badgeColor: "text-green-400",
     tagKeys: ["tag.organic", "tag.reactions", "tag.periodicTable"],
   },
   "Biology": {
     icon: Beaker,
-    iconBg: "bg-accent/20", iconColor: "text-accent",
-    borderColor: "border-accent/30", selectedBorder: "border-accent/80",
-    badgeKey: "badge.highSchool", badgeColor: "text-accent",
+    iconBg: "bg-emerald-500/20", iconColor: "text-emerald-400",
+    borderColor: "border-emerald-500/30", selectedBorder: "border-emerald-500/80",
+    badgeKey: "badge.highSchool", badgeColor: "text-emerald-400",
     tagKeys: ["tag.cells", "tag.genetics", "tag.ecosystems"],
   },
   "Geography": {
     icon: Globe,
-    iconBg: "bg-primary/20", iconColor: "text-primary",
-    borderColor: "border-primary/30", selectedBorder: "border-primary/80",
-    badgeKey: "badge.highSchool", badgeColor: "text-primary",
+    iconBg: "bg-teal-500/20", iconColor: "text-teal-400",
+    borderColor: "border-teal-500/30", selectedBorder: "border-teal-500/80",
+    badgeKey: "badge.highSchool", badgeColor: "text-teal-400",
     tagKeys: ["tag.physicalGeo", "tag.humanGeo", "tag.maps"],
   },
   "Arabic Language": {
     icon: BookMarked,
-    iconBg: "bg-secondary/20", iconColor: "text-secondary",
-    borderColor: "border-secondary/30", selectedBorder: "border-secondary/80",
-    badgeKey: "badge.highSchool", badgeColor: "text-secondary",
+    iconBg: "bg-rose-500/20", iconColor: "text-rose-400",
+    borderColor: "border-rose-500/30", selectedBorder: "border-rose-500/80",
+    badgeKey: "badge.highSchool", badgeColor: "text-rose-400",
     tagKeys: ["tag.grammar", "tag.literature", "tag.rhetoric"],
   },
   "Islamic Studies": {
     icon: GraduationCap,
-    iconBg: "bg-accent/20", iconColor: "text-accent",
-    borderColor: "border-accent/30", selectedBorder: "border-accent/80",
-    badgeKey: "badge.highSchool", badgeColor: "text-accent",
+    iconBg: "bg-amber-500/20", iconColor: "text-amber-400",
+    borderColor: "border-amber-500/30", selectedBorder: "border-amber-500/80",
+    badgeKey: "badge.highSchool", badgeColor: "text-amber-400",
     tagKeys: ["tag.tawheed", "tag.fiqh", "tag.hadith"],
   },
 };
 
-// ✅ الإصلاح: دالة تبحث عن meta بثلاث طرق
 const getCourseMeta = (course: any) => {
-  // 1) العنوان الكامل مثل "AWS Cloud Practitioner"
   if (courseMeta[course.title]) return courseMeta[course.title];
-
-  // 2) آخر جزء بعد " - " مثل "Verbal" من "Qudurat - Verbal"
   const shortTitle = course.title.includes(" - ")
     ? course.title.split(" - ").pop()?.trim()
     : null;
   if (shortTitle && courseMeta[shortTitle]) return courseMeta[shortTitle];
-
-  // 3) sub_category كـ fallback
-  if (course.sub_category && courseMeta[course.sub_category])
-    return courseMeta[course.sub_category];
-
+  if (course.sub_category && courseMeta[course.sub_category]) return courseMeta[course.sub_category];
   return null;
 };
 
 const CoursesPage = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
+  const { toast } = useToast();
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [tahseeliTrack, setTahseeliTrack] = useState<TahseeliTrack>(null);
   const [courses, setCourses] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [regenerating, setRegenerating] = useState(false);
 
   const categoryMeta: Record<Category, {
     title: string; subtitle: string; description: string;
@@ -170,7 +165,6 @@ const CoursesPage = () => {
   };
 
   useEffect(() => {
-    // ✅ استخدام بيانات محلية بدلاً من Supabase
     const defaultCourses = [
       { id: "455159fc-0c91-445e-a3b3-650d0727f1f7", category: "qudurat", sub_category: "verbal", title: "Qudurat - Verbal", description: "Verbal reasoning and reading comprehension practice", is_active: true },
       { id: "954b6d5f-6cff-4aa4-b732-8f68b4e4fc1f", category: "qudurat", sub_category: "quantitative", title: "Qudurat - Quantitative", description: "Quantitative reasoning and mathematical problem solving", is_active: true },
@@ -191,6 +185,42 @@ const CoursesPage = () => {
   }, []);
 
   const handleCategorySelect = (cat: Category) => { setSelectedCategory(cat); setSelectedCourseId(null); setTahseeliTrack(null); };
+
+  const handleCourseSelect = (courseId: string) => {
+    setSelectedCourseId(courseId);
+    preloadQuestions(courseId);
+  };
+
+  const preloadQuestions = async (courseId: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const { count } = await supabase
+        .from("questions")
+        .select("id", { count: "exact", head: true })
+        .eq("course_id", courseId);
+
+      if (count && count > 0) {
+        console.log(`✅ Course ${courseId} already has ${count} questions`);
+        return;
+      }
+
+      console.log(`⏳ Preloading questions for course ${courseId}...`);
+      supabase.functions.invoke("adaptive-engine", {
+        body: JSON.stringify({ course_id: courseId }),
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          "Content-Type": "application/json",
+          "x-action": "preload-questions",
+        },
+      }).then(() => console.log("✅ Preload done"))
+        .catch(console.error);
+    } catch (e) {
+      console.error("Preload error:", e);
+    }
+  };
+
   const handleBack = () => {
     if (selectedCategory === "tahseeli" && tahseeliTrack !== null) {
       setTahseeliTrack(null);
@@ -218,9 +248,7 @@ const CoursesPage = () => {
 
   const categoryCourses = courses.filter((c) => {
     if (c.category !== selectedCategory) return false;
-    if (selectedCategory === "tahseeli" && tahseeliTrack) {
-      return c.track === tahseeliTrack;
-    }
+    if (selectedCategory === "tahseeli" && tahseeliTrack) return c.track === tahseeliTrack;
     return true;
   });
   const categories: Category[] = ["qudurat", "tahseeli", "certifications"];
@@ -272,12 +300,12 @@ const CoursesPage = () => {
         {selectedCategory === "tahseeli" && !tahseeliTrack && (
           <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             <Card
-              className="group relative bg-card/80 border border-border/30 hover:border-primary/40 hover:shadow-card hover:shadow-lg transition-all duration-300 cursor-pointer p-0 overflow-hidden"
+              className="group relative bg-card/80 border border-cyan-500/30 hover:border-cyan-500/70 transition-all duration-300 cursor-pointer p-0 overflow-hidden"
               onClick={() => setTahseeliTrack("scientific")}
             >
-              <div className="h-1.5 bg-gradient-to-r from-primary to-secondary" />
+              <div className="h-1.5 bg-gradient-to-r from-cyan-500 to-blue-500" />
               <div className="p-7">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500 to-blue-500/40 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
                   <Microscope className="w-7 h-7 text-foreground" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-2">
@@ -288,10 +316,10 @@ const CoursesPage = () => {
                 </p>
                 <div className="flex flex-wrap gap-2 mb-5">
                   {["الفيزياء", "الرياضيات", "الأحياء", "الكيمياء"].map((s) => (
-                    <span key={s} className="px-2.5 py-0.5 rounded-full bg-muted/20 border border-border/30 text-xs text-muted-foreground">{s}</span>
+                    <span key={s} className="px-2.5 py-0.5 rounded-full bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-400">{s}</span>
                   ))}
                 </div>
-                <Button className="w-full rounded-xl bg-gradient-to-r from-primary to-secondary text-foreground font-semibold shadow-lg">
+                <Button className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-foreground font-semibold">
                   {language === "ar" ? "اختر العلمي" : "Select Scientific"}
                   <ArrowRight className={`w-4 h-4 ${language === "ar" ? "mr-2 rotate-180" : "ml-2"}`} />
                 </Button>
@@ -299,12 +327,12 @@ const CoursesPage = () => {
             </Card>
 
             <Card
-              className="group relative bg-card/80 border border-border/30 hover:border-primary/40 hover:shadow-card hover:shadow-lg transition-all duration-300 cursor-pointer p-0 overflow-hidden"
+              className="group relative bg-card/80 border border-rose-500/30 hover:border-rose-500/70 transition-all duration-300 cursor-pointer p-0 overflow-hidden"
               onClick={() => setTahseeliTrack("literary")}
             >
-              <div className="h-1.5 bg-gradient-to-r from-secondary to-accent" />
+              <div className="h-1.5 bg-gradient-to-r from-rose-500 to-amber-500" />
               <div className="p-7">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-secondary/20 to-accent/20 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-rose-500 to-amber-500/40 flex items-center justify-center mb-5 group-hover:scale-110 transition-transform duration-300">
                   <BookMarked className="w-7 h-7 text-foreground" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-2">
@@ -315,10 +343,10 @@ const CoursesPage = () => {
                 </p>
                 <div className="flex flex-wrap gap-2 mb-5">
                   {["الجغرافيا", "اللغة العربية", "الدروس الإسلامية"].map((s) => (
-                    <span key={s} className="px-2.5 py-0.5 rounded-full bg-muted/20 border border-border/30 text-xs text-muted-foreground">{s}</span>
+                    <span key={s} className="px-2.5 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/30 text-xs text-rose-400">{s}</span>
                   ))}
                 </div>
-                <Button className="w-full rounded-xl bg-gradient-to-r from-secondary to-accent text-foreground font-semibold shadow-lg">
+                <Button className="w-full rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 text-foreground font-semibold">
                   {language === "ar" ? "اختر الأدبي" : "Select Literary"}
                   <ArrowRight className={`w-4 h-4 ${language === "ar" ? "mr-2 rotate-180" : "ml-2"}`} />
                 </Button>
@@ -362,7 +390,7 @@ const CoursesPage = () => {
         {selectedCategory && (selectedCategory !== "tahseeli" || tahseeliTrack) && (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {categoryCourses.map((course) => {
-              const meta = getCourseMeta(course); // ✅ الإصلاح هنا
+              const meta = getCourseMeta(course);
               const Icon = meta?.icon ?? Award;
               const isSelected = selectedCourseId === course.id;
               const mapped = courseTranslationMap[course.title];
@@ -372,10 +400,12 @@ const CoursesPage = () => {
               return (
                 <Card
                   key={course.id}
-                  onClick={() => setSelectedCourseId(course.id)}
-                  className={`relative bg-card/80 border border-border/30 transition-all duration-300 cursor-pointer p-6 overflow-hidden hover:border-primary/40 hover:shadow-card hover:shadow-lg
-                    ${isSelected ? "scale-[1.02] border-primary/70 shadow-lg" : "hover:scale-[1.01]"}
-                  `}
+                  onClick={() => handleCourseSelect(course.id)}
+                  className={`relative bg-card/80 border transition-all duration-300 cursor-pointer p-6 overflow-hidden
+                    ${isSelected
+                      ? (meta?.selectedBorder ?? "border-primary/80") + " scale-[1.02]"
+                      : (meta?.borderColor ?? "border-border/30") + " hover:scale-[1.01]"
+                    }`}
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${isSelected ? (meta?.iconBg ?? "bg-muted/60") : (meta?.iconBg ?? "bg-muted/40")}`}>
