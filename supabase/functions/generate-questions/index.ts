@@ -226,7 +226,7 @@ ${existingContents || "لا توجد أسئلة مسبقة"}
     );
   }
 });
-=======
+
 
     if (!authHeader?.startsWith("Bearer ")) {
       return new Response(
@@ -431,3 +431,4 @@ Return JSON only:
   ]
 }`;
 }
+>>>>>>> Stashed changes
