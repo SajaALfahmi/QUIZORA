@@ -114,3 +114,76 @@ Quizora/
 │       └── generate-explanation/
 │
 └── README.md
+```
+
+---
+
+# Environment Variables
+
+Create a `.env` file:
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+OPENAI_API_KEY=your_openai_api_key
+```
+
+---
+
+# Running The Project
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run locally:
+
+```bash
+npm run dev
+```
+
+Deploy Supabase functions:
+
+```bash
+supabase functions deploy adaptive-engine
+supabase functions deploy generate-questions
+supabase functions deploy generate-explanation
+```
+
+---
+
+# Deployment
+
+## Frontend
+- Vercel
+
+## Backend
+- Supabase Edge Functions
+
+---
+
+# Team Project
+
+Saja AlFahmi
+Arwa AlRoqi
+Ritaj Alharthi
+Lana Alamir
+
+---
+
+# Future Improvements
+
+- Smarter AI-generated questions
+- Better Qudurat-style datasets
+- Performance analytics dashboard
+- Voice support for accessibility
+- Gamification system
+- Arabic NLP improvements
+
+---
+
+# License
+
+This project is for educational purposes only.
