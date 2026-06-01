@@ -106,6 +106,7 @@ const QuestionsPage = () => {
   const [lastResult, setLastResult] = useState<any>(null);
   const [explanation, setExplanation] = useState<string | null>(null);
   const [loadingExplanation, setLoadingExplanation] = useState(false);
+  const [adaptiveInfo, setAdaptiveInfo] = useState<any>(null);
   const [questionNumber, setQuestionNumber] = useState(0);
   const [totalCorrect, setTotalCorrect] = useState(0);
   const totalTimerRef = useRef<number>(0);
