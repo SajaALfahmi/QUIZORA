@@ -1,73 +1,189 @@
-# Welcome to your Lovable project
+# Quizora 
 
-## Project info
+Quizora is an AI-powered adaptive learning platform designed to help students prepare for Saudi standardized exams and professional certifications through personalized practice questions and intelligent difficulty adjustment.
 
-**URL**: https://lovable.dev/projects/6d040840-9c99-4e14-a905-6b4def42f08b
+The platform focuses on:
+- Qudurat (General Aptitude Test)
+- Tahseeli (Achievement Test)
+- Professional Certifications (CCNA, Security+, AWS, PMP)
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+# Features
 
-**Use Lovable**
+## Adaptive Learning Engine
+Quizora uses an adaptive engine based on BKT (Bayesian Knowledge Tracing) to:
+- Track user mastery levels
+- Analyze correct/incorrect answers
+- Adjust question difficulty dynamically
+- Personalize learning sessions
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6d040840-9c99-4e14-a905-6b4def42f08b) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## AI Question Generation
+The system integrates with OpenAI to:
+- Generate new Arabic multiple-choice questions
+- Create educational explanations
+- Produce questions with different difficulty levels
+- Avoid duplicate questions
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## Supported Categories
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### Qudurat
+- Verbal Section
+- Quantitative Section
 
-Follow these steps:
+### Tahseeli
+- Mathematics
+- Physics
+- Chemistry
+- Biology
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Professional Certifications
+- CCNA
+- CompTIA Security+
+- AWS Cloud Practitioner
+- PMP
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+---
 
-# Step 3: Install the necessary dependencies.
-npm i
+# Tech Stack
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+## Frontend
+- React
+- TypeScript
+- TailwindCSS
+- Vite
+
+## Backend
+- Supabase
+- Supabase Edge Functions
+- PostgreSQL
+
+## AI Integration
+- OpenAI API (GPT-4o-mini)
+
+---
+
+# Main System Components
+
+## Adaptive Engine
+Responsible for:
+- Starting learning sessions
+- Selecting next questions
+- Updating mastery levels
+- Ending sessions
+
+## AI Question Generator
+Responsible for:
+- Generating new questions
+- Creating explanations
+- Producing difficulty-based content
+
+---
+
+# Adaptive Difficulty Logic
+
+Difficulty is selected using mastery levels:
+
+- Easy → Beginner mastery
+- Medium → Intermediate mastery
+- Hard → Advanced mastery
+
+The system updates mastery after every answer using BKT formulas.
+
+---
+
+# Project Structure
+
+```bash
+Quizora/
+│
+├── src/
+│   ├── pages/
+│   ├── components/
+│   ├── services/
+│   └── integrations/
+│
+├── supabase/
+│   └── functions/
+│       ├── adaptive-engine/
+│       ├── generate-questions/
+│       └── generate-explanation/
+│
+└── README.md
+```
+
+---
+
+# Environment Variables
+
+Create a `.env` file:
+
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+OPENAI_API_KEY=your_openai_api_key
+```
+
+---
+
+# Running The Project
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Run locally:
+
+```bash
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+Deploy Supabase functions:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+supabase functions deploy adaptive-engine
+supabase functions deploy generate-questions
+supabase functions deploy generate-explanation
+```
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+# Deployment
 
-## What technologies are used for this project?
+## Frontend
+- Vercel
 
-This project is built with:
+## Backend
+- Supabase Edge Functions
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+---
 
-## How can I deploy this project?
+# Team Project
 
-Simply open [Lovable](https://lovable.dev/projects/6d040840-9c99-4e14-a905-6b4def42f08b) and click on Share -> Publish.
+Saja AlFahmi
+Arwa AlRoqi
+Ritaj Alharthi
+Lana Alamir
 
-## Can I connect a custom domain to my Lovable project?
+---
 
-Yes, you can!
+# Future Improvements
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+- Smarter AI-generated questions
+- Better Qudurat-style datasets
+- Performance analytics dashboard
+- Voice support for accessibility
+- Gamification system
+- Arabic NLP improvements
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+
+# License
+
+This project is for educational purposes only.

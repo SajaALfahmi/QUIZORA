@@ -286,23 +286,26 @@ const QuestionsPage = () => {
       }
       const result = await adaptiveEngine.startSession(currentCourseId, selectedCount, selectedDifficulty);
       setSessionId(result.session.id);
-      await fetchNextQuestion(result.session.id);
+      await fetchNextQuestion(result.session.id, selectedDifficulty);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       navigate("/courses");
     }
   };
 
-  const fetchNextQuestion = async (sid: string) => {
+  const fetchNextQuestion = async (sid: string, diffMode?: string) => {
     try {
       setIsLoading(true);
       setLoadingMessage(getRandomLoadingMessage());
       setShowResult(false); setSelectedAnswer(""); setExplanation(null); setLastResult(null);
       if (questionNumber >= selectedCount) { setFinished(true); setIsLoading(false); return; }
-      const result = await adaptiveEngine.getNextQuestion(sid);
+
+      const result = await adaptiveEngine.getNextQuestion(sid, diffMode || selectedDifficulty);
+
       if (result.finished) { setFinished(true); setIsLoading(false); return; }
       if (!result.question) throw new Error("No question returned from adaptive engine.");
       setCurrentQuestion(result.question);
+      if (result.adaptive_info) setAdaptiveInfo(result.adaptive_info);
       setQuestionNumber((p) => p + 1);
       setIsLoading(false);
       timerRef.current = 0;
@@ -327,6 +330,7 @@ const QuestionsPage = () => {
       });
       setLastResult(result); setShowResult(true);
       if (result.is_correct) setTotalCorrect((p) => p + 1);
+      // عرض الشرح تلقائياً إذا كان موجوداً في الرد
       if (result.explanation) setExplanation(result.explanation);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
@@ -356,7 +360,7 @@ const QuestionsPage = () => {
       setFinished(true);
       return;
     }
-    if (sessionId) fetchNextQuestion(sessionId);
+    if (sessionId) fetchNextQuestion(sessionId, selectedDifficulty);
   };
 
   const handleEndSession = async () => {
@@ -567,9 +571,11 @@ const QuestionsPage = () => {
     <div className="min-h-screen bg-background flex flex-col">
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-6 py-3">
-          <div className="flex items-center gap-2">
-            <img src={logo} alt="Quizora" className="w-8 h-8 object-contain" />
-            <span className="text-lg font-bold text-foreground hidden sm:inline">Quizora</span>
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30">
+              <BookOpen className="w-5 h-5 text-primary" />
+            </div>
+            <span className="text-lg font-bold text-primary">Quizora</span>
           </div>
           <div className="flex items-center gap-4">
             <button onClick={() => navigate("/dashboard")} className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground">
@@ -645,6 +651,7 @@ const QuestionsPage = () => {
                   {currentQuestion.content}
                 </CardTitle>
               </CardHeader>
+
               <CardContent>
                 <RadioGroup value={selectedAnswer} onValueChange={setSelectedAnswer} className="space-y-3" disabled={showResult}>
                   {currentQuestion.answer_options
