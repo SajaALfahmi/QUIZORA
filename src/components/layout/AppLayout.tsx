@@ -13,16 +13,13 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
 
   return (
     <div className="min-h-screen bg-background">
-      <AppSidebar
-        collapsed={sidebarCollapsed}
-        onToggle={handleToggleSidebar}
-      />
+      <AppSidebar collapsed={sidebarCollapsed} />
 
       <div
         className={`flex flex-col min-h-screen transition-all duration-300 ${
           sidebarCollapsed
-            ? "ml-12 rtl:ml-0 rtl:mr-12"
-            : "ml-56 rtl:ml-0 rtl:mr-56"
+            ? "ml-0 rtl:mr-0"
+            : "ml-56 rtl:mr-56"
         }`}
       >
         <AppTopbar onToggleSidebar={handleToggleSidebar} />

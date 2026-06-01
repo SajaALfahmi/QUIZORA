@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -5,17 +6,47 @@ import { BookOpen, HelpCircle, BarChart3, ArrowRight, Sparkles, FileText, Trophy
 import AppLayout from "./layout/AppLayout";
 import { useUserStats } from "@/hooks/useUserStats";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const stats = useUserStats();
   const { t } = useLanguage();
+  const { user } = useAuth();
+  const [unfinishedCoursesCount, setUnfinishedCoursesCount] = useState<number>(0);
+  const [continueLoading, setContinueLoading] = useState(true);
 
-  const mainOptions = [
-    { title: t("dashboard.learningTrack"), description: t("dashboard.learningTrackDesc"), icon: BookOpen, path: "/courses", color: "from-primary to-primary/40" },
-    { title: t("dashboard.questions"), description: t("dashboard.questionsDesc"), icon: HelpCircle, path: "/questions", color: "from-accent to-accent/40" },
-    { title: t("dashboard.evaluation"), description: t("dashboard.evaluationDesc"), icon: BarChart3, path: "/evaluation", color: "from-secondary to-secondary/40" },
-  ];
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchContinueLearning = async () => {
+      setContinueLoading(true);
+      try {
+        const { data: sessions } = await supabase
+          .from("learning_sessions")
+          .select("course_id")
+          .eq("user_id", user.id)
+          .eq("status", "active")
+          .order("started_at", { ascending: false });
+
+        if (!sessions || sessions.length === 0) {
+          setUnfinishedCoursesCount(0);
+          return;
+        }
+
+        const uniqueCourses = new Set(sessions.map((s) => s.course_id));
+        setUnfinishedCoursesCount(uniqueCourses.size);
+      } catch (error) {
+        console.error(error);
+        setUnfinishedCoursesCount(0);
+      } finally {
+        setContinueLoading(false);
+      }
+    };
+
+    fetchContinueLearning();
+  }, [user, t]);
 
   const statCards = [
     { label: t("dashboard.questionsAnswered"), value: stats.totalQuestions, icon: Target },
@@ -54,21 +85,53 @@ const Dashboard = () => {
         )}
 
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-10">
-          {mainOptions.map((option) => {
-            const Icon = option.icon;
-            return (
-              <Card key={option.title} className="bg-card/80 border border-border/30 hover:border-primary/50 transition-all duration-300 cursor-pointer p-6 text-center" onClick={() => navigate(option.path)}>
-                <div className={`p-4 rounded-2xl bg-gradient-to-br ${option.color} w-fit mx-auto mb-4`}>
-                  <Icon className="w-8 h-8 text-foreground" />
-                </div>
-                <h3 className="text-lg font-bold text-foreground mb-2">{option.title}</h3>
-                <p className="text-sm text-muted-foreground mb-5">{option.description}</p>
-                <Button className="w-full bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl">
-                  {t("dashboard.startNow")}<ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Card>
-            );
-          })}
+          <Card className="bg-card/80 border border-border/30 hover:border-primary/50 transition-all duration-300 cursor-pointer p-6 text-center" onClick={() => navigate("/courses") }>
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-primary to-primary/40 w-fit mx-auto mb-4">
+              <BookOpen className="w-8 h-8 text-foreground" />
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-2">{t("dashboard.learningTrack")}</h3>
+            <p className="text-sm text-muted-foreground mb-5">{t("dashboard.learningTrackDesc")}</p>
+            <Button className="w-full bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl">
+              {t("dashboard.startNow")}<ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Card>
+
+          <Card className="bg-card/80 border border-border/30 hover:border-accent/50 transition-all duration-300 cursor-pointer p-6 text-center" onClick={() => navigate("/continue-learning") }>
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-accent to-accent/40 w-fit mx-auto mb-4">
+              <HelpCircle className="w-8 h-8 text-foreground" />
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-2">{t("dashboard.continueLearning")}</h3>
+            <p className="text-sm text-muted-foreground mb-5">
+              {continueLoading
+                ? t("dashboard.loadingProgress")
+                : unfinishedCoursesCount > 0
+                ? t("dashboard.continueLearningDesc")
+                : t("dashboard.noProgressYet")}
+            </p>
+
+            {!continueLoading && unfinishedCoursesCount > 0 && (
+              <div className="space-y-3 mb-5 rounded-3xl border border-border/30 bg-muted/30 p-4 text-left">
+                <p className="text-sm font-semibold text-foreground">{unfinishedCoursesCount} {t("dashboard.unfinishedCourses")}</p>
+                <p className="text-xs text-muted-foreground">{t("dashboard.chooseCourseToContinue")}</p>
+              </div>
+            )}
+
+            <Button className="w-full bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl">
+              {t("dashboard.continueLearning")}
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Card>
+
+          <Card className="bg-card/80 border border-border/30 hover:border-secondary/50 transition-all duration-300 cursor-pointer p-6 text-center" onClick={() => navigate("/evaluation") }>
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-secondary to-secondary/40 w-fit mx-auto mb-4">
+              <BarChart3 className="w-8 h-8 text-foreground" />
+            </div>
+            <h3 className="text-lg font-bold text-foreground mb-2">{t("dashboard.evaluation")}</h3>
+            <p className="text-sm text-muted-foreground mb-5">{t("dashboard.evaluationDesc")}</p>
+            <Button className="w-full bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl">
+              {t("dashboard.viewReports")}<ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </Card>
         </div>
 
         <Card className="bg-card/80 border border-border/30 hover:border-primary/50 transition-all duration-300 cursor-pointer max-w-4xl mx-auto" onClick={() => navigate("/reports")}>

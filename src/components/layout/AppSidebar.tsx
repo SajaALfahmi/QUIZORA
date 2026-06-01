@@ -7,7 +7,7 @@ import {
   User,
   BarChart3,
   Settings,
-  ChevronRight,
+  PlayCircle,
   LogOut,
 } from "lucide-react";
 
@@ -17,10 +17,9 @@ import logo from "@/assets/logo.png";
 
 interface AppSidebarProps {
   collapsed: boolean;
-  onToggle: () => void;
 }
 
-const AppSidebar = ({ collapsed, onToggle }: AppSidebarProps) => {
+const AppSidebar = ({ collapsed }: AppSidebarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { signOut } = useAuth();
@@ -29,6 +28,7 @@ const AppSidebar = ({ collapsed, onToggle }: AppSidebarProps) => {
   const navItems = [
     { label: t("nav.dashboard"), icon: Home, path: "/dashboard" },
     { label: t("nav.learningTrack"), icon: BookOpen, path: "/courses" },
+    { label: t("nav.continueLearning"), icon: PlayCircle, path: "/continue-learning" },
     { label: t("nav.results"), icon: FileText, path: "/evaluation" },
     { label: t("nav.assessments"), icon: CheckCircle, path: "/questions" },
     { label: t("nav.profile"), icon: User, path: "/profile" },
@@ -43,11 +43,11 @@ const AppSidebar = ({ collapsed, onToggle }: AppSidebarProps) => {
   return (
     <div
       className={`fixed top-0 bottom-0 left-0 z-40 flex items-start transition-all duration-300 ${
-        collapsed ? "w-12" : "w-56"
+        collapsed ? "w-0" : "w-56"
       } rtl:left-auto rtl:right-0`}
     >
       <aside
-        className={`h-full overflow-hidden bg-card border-r border-border/50 transition-all duration-300 ${
+        className={`flex h-full flex-col overflow-hidden bg-card border-r border-border/50 transition-all duration-300 ${
           collapsed
             ? "w-0 opacity-0 pointer-events-none"
             : "w-56"
@@ -110,22 +110,6 @@ const AppSidebar = ({ collapsed, onToggle }: AppSidebarProps) => {
         </div>
       </aside>
 
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-border/50 bg-background text-muted-foreground shadow-sm transition-transform duration-300 hover:bg-muted/80 hover:text-foreground"
-        aria-label={
-          collapsed
-            ? t("common.openSidebar")
-            : t("common.closeSidebar")
-        }
-      >
-        <ChevronRight
-          className={`h-4 w-4 transition-transform duration-300 ${
-            collapsed ? "" : "rotate-180"
-          }`}
-        />
-      </button>
     </div>
   );
 };

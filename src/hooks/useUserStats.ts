@@ -32,7 +32,7 @@ export interface UserStats {
   loading: boolean;
 }
 
-const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const DAYS   = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export function useUserStats(): UserStats {
@@ -78,60 +78,58 @@ export function useUserStats(): UserStats {
           .eq("user_id", user.id),
       ]);
 
-      const sessions = sessionsRes.data ?? [];
-      const answers = answersRes.data ?? [];
-      const progress = progressRes.data ?? [];
-      const skills = skillsRes.data ?? [];
+      const sessions    = sessionsRes.data    ?? [];
+      const answers     = answersRes.data     ?? [];
+      const progress    = progressRes.data    ?? [];
+      const skills      = skillsRes.data      ?? [];
       const skillLevels = skillLevelsRes.data ?? [];
 
       const completedSessions = sessions.filter((s) => s.status === "completed");
-      const totalCorrect = answers.filter((a) => a.is_correct).length;
-      const avgScore = answers.length > 0 ? Math.round((totalCorrect / answers.length) * 100) : 0;
-      const uniqueCourses = new Set(sessions.map((s) => s.course_id)).size;
-      const maxStreak = progress.reduce((max, p) => Math.max(max, p.current_streak), 0);
-      const totalTime = answers.reduce((sum, a) => sum + (a.time_spent_seconds ?? 0), 0);
+      const totalCorrect      = answers.filter((a) => a.is_correct).length;
+      const avgScore          = answers.length > 0 ? Math.round((totalCorrect / answers.length) * 100) : 0;
+      const uniqueCourses     = new Set(sessions.map((s) => s.course_id)).size;
+      const maxStreak         = progress.reduce((max, p) => Math.max(max, p.current_streak), 0);
+      const totalTime         = answers.reduce((sum, a) => sum + (a.time_spent_seconds ?? 0), 0);
 
-      // Weekly activity (last 7 days)
+      // ── Weekly activity (last 7 days) ──
       const weeklyMap: Record<string, number> = {};
       DAYS.forEach((d) => (weeklyMap[d] = 0));
       const now = new Date();
       answers.forEach((a) => {
-        const d = new Date(a.answered_at);
+        const d    = new Date(a.answered_at);
         const diff = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
-        if (diff <= 7) {
-          weeklyMap[DAYS[d.getDay()]] += 1;
-        }
+        if (diff <= 7) weeklyMap[DAYS[d.getDay()]] += 1;
       });
 
-      // Monthly scores (group completed sessions by month)
+      // ── Monthly scores — محسوبة من user_answers مباشرة ──
       const monthlyMap: Record<string, { correct: number; total: number }> = {};
-      completedSessions.forEach((s) => {
-        const m = MONTHS[new Date(s.started_at).getMonth()];
+      answers.forEach((a) => {
+        const m = MONTHS[new Date(a.answered_at).getMonth()];
         if (!monthlyMap[m]) monthlyMap[m] = { correct: 0, total: 0 };
-        monthlyMap[m].correct += s.correct_answers;
-        monthlyMap[m].total += s.total_questions;
+        monthlyMap[m].total += 1;
+        if (a.is_correct) monthlyMap[m].correct += 1;
       });
 
       const skillMap = new Map(skills.map((s) => [s.id, s.name]));
 
       setStats({
-        totalSessions: sessions.length,
-        completedSessions: completedSessions.length,
-        totalQuestions: answers.length,
+        totalSessions:         sessions.length,
+        completedSessions:     completedSessions.length,
+        totalQuestions:        answers.length,
         totalCorrect,
-        averageScore: avgScore,
-        coursesStarted: uniqueCourses,
-        currentStreak: maxStreak,
+        averageScore:          avgScore,
+        coursesStarted:        uniqueCourses,
+        currentStreak:         maxStreak,
         totalStudyTimeMinutes: Math.round(totalTime / 60),
-        recentSessions: sessions.slice(0, 10),
+        recentSessions:        sessions.slice(0, 10),
         skillLevels: skillLevels.map((sl) => ({
-          skill_name: skillMap.get(sl.skill_id) ?? "Unknown",
-          mastery_level: sl.mastery_level,
-          questions_attempted: sl.questions_attempted,
-          questions_correct: sl.questions_correct,
+          skill_name:           skillMap.get(sl.skill_id) ?? "Unknown",
+          mastery_level:        sl.mastery_level,
+          questions_attempted:  sl.questions_attempted,
+          questions_correct:    sl.questions_correct,
         })),
         weeklyActivity: DAYS.map((d) => ({ day: d, questions: weeklyMap[d] })),
-        monthlyScores: Object.entries(monthlyMap).map(([month, v]) => ({
+        monthlyScores:  Object.entries(monthlyMap).map(([month, v]) => ({
           month,
           score: v.total > 0 ? Math.round((v.correct / v.total) * 100) : 0,
         })),

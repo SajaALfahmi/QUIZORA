@@ -12,6 +12,7 @@ import ResetPasswordPage from "./components/ResetPasswordPage";
 import Dashboard from "./components/Dashboard";
 import CoursesPage from "./components/CoursesPage";
 import CourseDetailPage from "./components/CourseDetailPage";
+import ContinueLearningPage from "./components/ContinueLearningPage";
 import QuestionsPage from "./components/QuestionsPage";
 import EvaluationPage from "./components/EvaluationPage";
 import ProfilePage from "./components/ProfilePage";
@@ -55,6 +56,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/continue-learning"
+                element={
+                  <ProtectedRoute>
+                    <ContinueLearningPage />
                   </ProtectedRoute>
                 }
               />
