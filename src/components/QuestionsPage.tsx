@@ -171,9 +171,7 @@ const QuestionsPage = () => {
   const handleEndSession = async () => {
     if (totalIntervalRef.current) clearInterval(totalIntervalRef.current);
     if (sessionId) await adaptiveEngine.endSession(sessionId);
-    navigate("/evaluation", {
-      state: { totalQuestions: questionNumber, totalCorrect, sessionId, timeSpentSeconds: totalTimerRef.current },
-    });
+    navigate("/evaluation", { state: { totalQuestions: questionNumber, totalCorrect, sessionId, timeSpentSeconds: totalTimerRef.current } });
   };
 
   const difficultyLabel = (d: DifficultyOption) => {
