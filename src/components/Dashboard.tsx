@@ -85,50 +85,44 @@ const Dashboard = () => {
         )}
 
         <div className="grid md:grid-cols-3 gap-6 max-w-4xl mx-auto mb-10">
-          <Card className="bg-card/80 border border-border/30 hover:border-primary/50 transition-all duration-300 cursor-pointer p-6 text-center" onClick={() => navigate("/courses") }>
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-primary to-primary/40 w-fit mx-auto mb-4">
-              <BookOpen className="w-8 h-8 text-foreground" />
+          <Card className="bg-card/80 border border-border/30 hover:border-primary/50 transition-all duration-300 cursor-pointer p-6 text-center flex flex-col justify-between min-h-[360px]" onClick={() => navigate("/courses") }>
+            <div>
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-primary to-primary/40 w-fit mx-auto mb-4">
+                <BookOpen className="w-8 h-8 text-foreground" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-2">{t("dashboard.learningTrack")}</h3>
+              <p className="text-sm text-muted-foreground mb-5">{t("dashboard.learningTrackDesc")}</p>
             </div>
-            <h3 className="text-lg font-bold text-foreground mb-2">{t("dashboard.learningTrack")}</h3>
-            <p className="text-sm text-muted-foreground mb-5">{t("dashboard.learningTrackDesc")}</p>
-            <Button className="w-full bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl">
+            <Button className="w-full h-12 bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl">
               {t("dashboard.startNow")}<ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Card>
 
-          <Card className="bg-card/80 border border-border/30 hover:border-accent/50 transition-all duration-300 cursor-pointer p-6 text-center" onClick={() => navigate("/continue-learning") }>
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-accent to-accent/40 w-fit mx-auto mb-4">
-              <HelpCircle className="w-8 h-8 text-foreground" />
-            </div>
-            <h3 className="text-lg font-bold text-foreground mb-2">{t("dashboard.continueLearning")}</h3>
-            <p className="text-sm text-muted-foreground mb-5">
-              {continueLoading
-                ? t("dashboard.loadingProgress")
-                : unfinishedCoursesCount > 0
-                ? t("dashboard.continueLearningDesc")
-                : t("dashboard.noProgressYet")}
-            </p>
-
-            {!continueLoading && unfinishedCoursesCount > 0 && (
-              <div className="space-y-3 mb-5 rounded-3xl border border-border/30 bg-muted/30 p-4 text-left">
-                <p className="text-sm font-semibold text-foreground">{unfinishedCoursesCount} {t("dashboard.unfinishedCourses")}</p>
-                <p className="text-xs text-muted-foreground">{t("dashboard.chooseCourseToContinue")}</p>
+          <Card className="bg-card/80 border border-border/30 hover:border-accent/50 transition-all duration-300 cursor-pointer p-6 text-center flex flex-col justify-between min-h-[360px]" onClick={() => navigate("/continue-learning") }>
+            <div>
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-accent to-accent/40 w-fit mx-auto mb-4">
+                <HelpCircle className="w-8 h-8 text-foreground" />
               </div>
-            )}
-
-            <Button className="w-full bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl">
+              <h3 className="text-xl font-extrabold text-foreground mb-2">{t("dashboard.continueLearning")}</h3>
+            </div>
+            <Button
+              className="w-full h-12 bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl"
+              onClick={(event) => { event.stopPropagation(); navigate("/continue-learning"); }}
+            >
               {t("dashboard.continueLearning")}
               <ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Card>
 
-          <Card className="bg-card/80 border border-border/30 hover:border-secondary/50 transition-all duration-300 cursor-pointer p-6 text-center" onClick={() => navigate("/evaluation") }>
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-secondary to-secondary/40 w-fit mx-auto mb-4">
-              <BarChart3 className="w-8 h-8 text-foreground" />
+          <Card className="bg-card/80 border border-border/30 hover:border-secondary/50 transition-all duration-300 cursor-pointer p-6 text-center flex flex-col justify-between min-h-[360px]" onClick={() => navigate("/evaluation") }>
+            <div>
+              <div className="p-4 rounded-2xl bg-gradient-to-br from-secondary to-secondary/40 w-fit mx-auto mb-4">
+                <BarChart3 className="w-8 h-8 text-foreground" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground mb-2">{t("dashboard.evaluation")}</h3>
+              <p className="text-sm text-muted-foreground mb-5">{t("dashboard.evaluationDesc")}</p>
             </div>
-            <h3 className="text-lg font-bold text-foreground mb-2">{t("dashboard.evaluation")}</h3>
-            <p className="text-sm text-muted-foreground mb-5">{t("dashboard.evaluationDesc")}</p>
-            <Button className="w-full bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl">
+            <Button className="w-full h-12 bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl">
               {t("dashboard.viewReports")}<ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Card>

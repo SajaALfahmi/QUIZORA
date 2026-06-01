@@ -36,23 +36,23 @@ const AuthPage = () => {
 
   const handleSignIn = async () => {
     if (!email || !password) {
-      toast({ title: "Error", description: "Please fill in all fields.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("auth.fillAllFields"), variant: "destructive" });
       return;
     }
     setIsLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     setIsLoading(false);
     if (error) {
-      toast({ title: "Sign in failed", description: error.message, variant: "destructive" });
+      toast({ title: t("auth.signInFailed"), description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Welcome back!", description: "You have successfully signed in." });
+      toast({ title: t("auth.welcomeBack"), description: t("auth.signedInSuccess") });
       navigate("/dashboard");
     }
   };
 
   const handleSignUp = async () => {
     if (!email || !password || !fullName) {
-      toast({ title: "Error", description: "Please fill in all fields.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("auth.fillAllFields"), variant: "destructive" });
       return;
     }
     setIsLoading(true);
@@ -66,9 +66,9 @@ const AuthPage = () => {
     });
     setIsLoading(false);
     if (error) {
-      toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
+      toast({ title: t("auth.loginFailed"), description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Account created!", description: "Please check your email to verify your account." });
+      toast({ title: t("auth.accountCreated"), description: t("auth.emailVerification") });
     }
   };
 
@@ -96,16 +96,16 @@ const handleSocialLogin = async (provider: "google" | "apple") => {
 
   const handleForgotPassword = async () => {
     if (!email) {
-      toast({ title: "Error", description: "Please enter your email first.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("auth.enterEmailFirst"), variant: "destructive" });
       return;
     }
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
     });
     if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Check your email", description: "We sent you a password reset link." });
+      toast({ title: t("auth.emailSent"), description: t("auth.resetLinkSent") });
     }
   };
 

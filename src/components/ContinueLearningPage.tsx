@@ -123,8 +123,7 @@ const ContinueLearningPage = () => {
             <span className="text-sm text-muted-foreground font-medium">{t("dashboard.hub")}</span>
           </div>
           <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-            {t("dashboard.continueLearning")} 
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent">{t("dashboard.title")}</span>
+            {t("dashboard.continueLearning")}
           </h2>
           <p className="text-muted-foreground max-w-xl mx-auto">{t("dashboard.continueLearningDesc")}</p>
         </div>

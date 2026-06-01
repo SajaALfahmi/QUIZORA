@@ -42,8 +42,8 @@ const ProfilePage = () => {
     setIsSaving(true);
     const { error } = await supabase.from("profiles").update({ full_name: userInfo.name, email: userInfo.email }).eq("user_id", user.id);
     setIsSaving(false); setIsEditing(false);
-    if (error) toast({ title: language === "ar" ? "خطأ" : "Error", description: language === "ar" ? "فشل حفظ الملف الشخصي." : "Failed to save profile.", variant: "destructive" });
-    else toast({ title: language === "ar" ? "تم تحديث الملف!" : "Profile Updated!", description: language === "ar" ? "تم حفظ ملفك الشخصي." : "Your profile has been saved." });
+    if (error) toast({ title: t("common.error"), description: t("profile.saveError"), variant: "destructive" });
+    else toast({ title: t("profile.saveSuccessTitle"), description: t("profile.saveSuccessDesc") });
   };
 
   const handleInputChange = (field: string, value: string) => setUserInfo((p) => ({ ...p, [field]: value }));

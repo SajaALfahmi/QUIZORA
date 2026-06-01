@@ -309,10 +309,10 @@ const CoursesPage = () => {
                   <Microscope className="w-7 h-7 text-foreground" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-2">
-                  {language === "ar" ? "القسم العلمي" : "Scientific Track"}
+                  {t("courses.scientificTrack")}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {language === "ar" ? "فيزياء • رياضيات • أحياء • كيمياء" : "Physics • Mathematics • Biology • Chemistry"}
+                  {t("courses.scientificSubjects")}
                 </p>
                 <div className="flex flex-wrap gap-2 mb-5">
                   {["الفيزياء", "الرياضيات", "الأحياء", "الكيمياء"].map((s) => (
@@ -320,7 +320,7 @@ const CoursesPage = () => {
                   ))}
                 </div>
                 <Button className="w-full rounded-xl bg-gradient-to-r from-cyan-500 to-blue-500 text-foreground font-semibold">
-                  {language === "ar" ? "اختر العلمي" : "Select Scientific"}
+                  {t("courses.selectScientific")}
                   <ArrowRight className={`w-4 h-4 ${language === "ar" ? "mr-2 rotate-180" : "ml-2"}`} />
                 </Button>
               </div>
@@ -336,10 +336,10 @@ const CoursesPage = () => {
                   <BookMarked className="w-7 h-7 text-foreground" />
                 </div>
                 <h3 className="text-2xl font-bold text-foreground mb-2">
-                  {language === "ar" ? "القسم الأدبي" : "Literary Track"}
+                  {t("courses.literaryTrack")}
                 </h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {language === "ar" ? "جغرافيا • اللغة العربية • الدروس الإسلامية" : "Geography • Arabic Language • Islamic Studies"}
+                  {t("courses.literarySubjects")}
                 </p>
                 <div className="flex flex-wrap gap-2 mb-5">
                   {["الجغرافيا", "اللغة العربية", "الدروس الإسلامية"].map((s) => (
@@ -347,7 +347,7 @@ const CoursesPage = () => {
                   ))}
                 </div>
                 <Button className="w-full rounded-xl bg-gradient-to-r from-rose-500 to-amber-500 text-foreground font-semibold">
-                  {language === "ar" ? "اختر الأدبي" : "Select Literary"}
+                  {t("courses.selectLiterary")}
                   <ArrowRight className={`w-4 h-4 ${language === "ar" ? "mr-2 rotate-180" : "ml-2"}`} />
                 </Button>
               </div>

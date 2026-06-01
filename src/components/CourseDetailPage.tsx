@@ -195,7 +195,7 @@ const CourseDetailPage = () => {
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-4">
               <h2 className="text-2xl font-bold text-foreground">
-                {language === "ar" ? "المراجعات:" : "Reviews:"}
+                {t("courseDetail.reviews")}
               </h2>
               {reviews.length > 0 && (
                 <div className="flex items-center gap-2">
@@ -213,7 +213,7 @@ const CourseDetailPage = () => {
                 onClick={() => setShowForm((v) => !v)}
               >
                 <Star className="w-4 h-4" />
-                {language === "ar" ? "اكتب مراجعة" : "Write a Review"}
+                {t("courseDetail.writeReview")}
               </Button>
             ) : (
               <button
@@ -229,45 +229,45 @@ const CourseDetailPage = () => {
           {showForm && user && (
             <Card className="bg-card/80 border border-primary/30 p-6 mb-8">
               <h3 className="font-bold text-foreground mb-5">
-                {language === "ar" ? "شاركنا رأيك" : "Share your opinion"}
+                {t("courseDetail.shareOpinion")}
               </h3>
               <div className="mb-5">
                 <p className="text-sm text-muted-foreground mb-2">
-                  {language === "ar" ? "التقييم العام" : "Overall Rating"}
+                  {t("courseDetail.overallRating")}
                 </p>
                 <StarRating value={formRating} onChange={setFormRating} />
                 {formRating === 0 && (
                   <p className="text-xs text-muted-foreground/60 mt-1">
-                    {language === "ar" ? "اختر تقييمك" : "Click to rate"}
+                    {t("courseDetail.clickToRate")}
                   </p>
                 )}
               </div>
               <div className="mb-4">
                 <label className="block text-sm text-muted-foreground mb-1.5">
-                  {language === "ar" ? "عنوان المراجعة" : "Review Title"}
+                  {t("courseDetail.reviewTitle")}
                 </label>
                 <input
                   value={formTitle}
                   onChange={(e) => setFormTitle(e.target.value)}
-                  placeholder={language === "ar" ? "مثال: تجربة رائعة!" : "e.g. Amazing experience!"}
+                  placeholder={t("courseDetail.reviewPlaceholder")}
                   className="w-full bg-muted/30 border border-border/40 rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/60 transition-colors"
                 />
               </div>
               <div className="mb-5">
                 <label className="block text-sm text-muted-foreground mb-1.5">
-                  {language === "ar" ? "رأيك بالتفصيل" : "Your detailed review"}
+                  {t("courseDetail.detailedReview")}
                 </label>
                 <textarea
                   value={formText}
                   onChange={(e) => setFormText(e.target.value)}
                   rows={3}
-                  placeholder={language === "ar" ? "ماذا أعجبك في هذا البرنامج؟" : "What did you like? Did it help?"}
+                  placeholder={t("courseDetail.detailedPlaceholder")}
                   className="w-full bg-muted/30 border border-border/40 rounded-xl px-4 py-2.5 text-sm text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:border-primary/60 transition-colors resize-none"
                 />
               </div>
               <div className="flex gap-3 justify-end">
                 <Button variant="ghost" className="text-muted-foreground" onClick={() => setShowForm(false)}>
-                  {language === "ar" ? "إلغاء" : "Cancel"}
+                  {t("common.cancel")}
                 </Button>
                 <Button
                   onClick={handleSubmitReview}
@@ -275,7 +275,7 @@ const CourseDetailPage = () => {
                   className="bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl px-6 gap-2 disabled:opacity-50"
                 >
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                  {language === "ar" ? "نشر المراجعة" : "Submit Review"}
+                  {t("courseDetail.postReview")}
                 </Button>
               </div>
             </Card>
@@ -284,10 +284,9 @@ const CourseDetailPage = () => {
           {submitted && (
             <div className="mb-6 flex items-center gap-2 text-sm text-green-400 bg-green-400/10 border border-green-400/20 rounded-xl px-4 py-3">
               <CheckCircle className="w-4 h-4" />
-              {language === "ar" ? "تم نشر مراجعتك بنجاح ✨" : "Your review was published successfully ✨"}
+              {t("courseDetail.reviewSuccess")}
             </div>
           )}
-
           {reviews.length > 0 ? (
             <div className="grid md:grid-cols-3 gap-5">
               {reviews.map((review) => (
@@ -313,12 +312,12 @@ const CourseDetailPage = () => {
                 <Star className="w-8 h-8 text-muted-foreground/40" />
               </div>
               <p className="text-muted-foreground font-medium mb-1">
-                {language === "ar" ? "لا توجد مراجعات بعد" : "No reviews yet"}
+                {t("courseDetail.noReviews")}
               </p>
               <p className="text-sm text-muted-foreground/60">
                 {user
-                  ? (language === "ar" ? "كن أول من يشارك رأيه!" : "Be the first to share your experience!")
-                  : (language === "ar" ? "سجّل دخول لتكتب أول مراجعة" : "Sign in to write the first review")}
+                  ? t("courseDetail.firstReviewer")
+                  : t("courseDetail.signInFirstReview")}
               </p>
               {user && !showForm && (
                 <Button
@@ -327,7 +326,7 @@ const CourseDetailPage = () => {
                   onClick={() => setShowForm(true)}
                 >
                   <Star className="w-4 h-4 mr-2" />
-                  {language === "ar" ? "اكتب مراجعة" : "Write a Review"}
+                  {t("courseDetail.writeReview")}
                 </Button>
               )}
             </Card>

@@ -43,25 +43,23 @@ const AppTopbar = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        <div
-          className="flex items-center gap-2.5 cursor-pointer"
-          onClick={() => navigate("/dashboard")}
-        >
-          <img
-            src={logo}
-            alt="Quizora"
-            className="w-6 h-6 md:w-7 md:h-7 object-contain"
-          />
-          <span className="text-base md:text-lg font-bold text-foreground hidden sm:inline">
-            Quizora
-          </span>
-        </div>
+        <div className="flex items-center gap-2.5">
+          <div
+            className="flex items-center gap-2.5 cursor-pointer"
+            onClick={() => navigate("/dashboard")}
+          >
+            <img
+              src={logo}
+              alt={t("app.name")}
+              className="w-6 h-6 md:w-7 md:h-7 object-contain"
+            />
+            <span className="text-base md:text-lg font-bold text-primary hidden sm:inline">
+              {t("app.name")}
+            </span>
+          </div>
 
-        <div className="flex items-center justify-end gap-4">
           <button
-            onClick={() =>
-              setLanguage(language === "en" ? "ar" : "en")
-            }
+            onClick={() => setLanguage(language === "en" ? "ar" : "en")}
             className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
             title={language === "en" ? "العربية" : "English"}
           >

@@ -38,24 +38,24 @@ const SettingsPage = () => {
 
   const handleChangePassword = async () => {
     if (!newPassword || !confirmPassword) {
-      toast({ title: language === "ar" ? "خطأ" : "Error", description: language === "ar" ? "يرجى ملء جميع حقول كلمة المرور." : "Please fill all password fields.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("settings.passwordFieldsRequired"), variant: "destructive" });
       return;
     }
     if (newPassword !== confirmPassword) {
-      toast({ title: language === "ar" ? "خطأ" : "Error", description: language === "ar" ? "كلمتا المرور غير متطابقتين." : "New passwords do not match.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("settings.passwordsMismatch"), variant: "destructive" });
       return;
     }
     if (newPassword.length < 6) {
-      toast({ title: language === "ar" ? "خطأ" : "Error", description: language === "ar" ? "كلمة المرور يجب أن تكون 6 أحرف على الأقل." : "Password must be at least 6 characters.", variant: "destructive" });
+      toast({ title: t("common.error"), description: t("settings.passwordTooShort"), variant: "destructive" });
       return;
     }
     setSavingPassword(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setSavingPassword(false);
     if (error) {
-      toast({ title: language === "ar" ? "خطأ" : "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } else {
-      toast({ title: language === "ar" ? "تم تحديث كلمة المرور!" : "Password Updated!", description: language === "ar" ? "تم تغيير كلمة مرورك بنجاح." : "Your password has been changed successfully." });
+      toast({ title: t("settings.passwordUpdatedTitle"), description: t("settings.passwordUpdatedDesc") });
       setCurrentPassword(""); setNewPassword(""); setConfirmPassword("");
     }
   };
@@ -64,19 +64,15 @@ const SettingsPage = () => {
     setSavingNotif(true);
     await new Promise((r) => setTimeout(r, 800));
     setSavingNotif(false);
-    toast({ title: language === "ar" ? "تم حفظ التفضيلات!" : "Preferences Saved!", description: language === "ar" ? "تم تحديث إعدادات الإشعارات." : "Your notification settings have been updated." });
+    toast({ title: t("settings.preferencesSavedTitle"), description: t("settings.preferencesSavedDesc") });
   };
 
   const handleDeleteAccount = async () => {
-    const confirmed = window.confirm(
-      language === "ar"
-        ? "هل أنت متأكد من حذف حسابك؟ لا يمكن التراجع عن هذا الإجراء."
-        : "Are you sure you want to delete your account? This action cannot be undone."
-    );
+    const confirmed = window.confirm(t("settings.deleteConfirm"));
     if (!confirmed) return;
     setDeletingAccount(true);
     await supabase.auth.signOut();
-    toast({ title: language === "ar" ? "تم حذف الحساب" : "Account Deleted", description: language === "ar" ? "تم إزالة حسابك." : "Your account has been removed.", variant: "destructive" });
+    toast({ title: t("settings.accountDeletedTitle"), description: t("settings.accountDeletedDesc"), variant: "destructive" });
     setDeletingAccount(false);
   };
 
@@ -270,10 +266,10 @@ const SettingsPage = () => {
       </div>
       <div>
         <CardTitle className="text-lg">
-          {language === "ar" ? "المظهر" : "Appearance"}
+          {t("settings.appearance")}
         </CardTitle>
         <CardDescription>
-          {language === "ar" ? "اختر مظهر الموقع" : "Choose your theme"}
+          {t("settings.chooseTheme")}
         </CardDescription>
       </div>
     </div>
@@ -281,25 +277,25 @@ const SettingsPage = () => {
   <CardContent>
     <div className="flex gap-3">
       <button
-  onClick={() => {
-  document.documentElement.classList.remove("dark");
-  document.documentElement.classList.add("light");
-  localStorage.setItem("theme", "light");
-}}
-  className="flex-1 py-3 rounded-xl border text-sm font-semibold"
->
-  {language === "ar" ? "☀️ نهاري" : "☀️ Light"}
-</button>
-<button
-  onClick={() => {
-  document.documentElement.classList.remove("light");
-  document.documentElement.classList.add("dark");
-  localStorage.setItem("theme", "dark");
-}}
-  className="flex-1 py-3 rounded-xl border text-sm font-semibold"
->
-  {language === "ar" ? "🌙 ليلي" : "🌙 Dark"}
-</button>
+        onClick={() => {
+          document.documentElement.classList.remove("dark");
+          document.documentElement.classList.add("light");
+          localStorage.setItem("theme", "light");
+        }}
+        className="flex-1 py-3 rounded-xl border text-sm font-semibold"
+      >
+        {t("settings.modeLight")}
+      </button>
+      <button
+        onClick={() => {
+          document.documentElement.classList.remove("light");
+          document.documentElement.classList.add("dark");
+          localStorage.setItem("theme", "dark");
+        }}
+        className="flex-1 py-3 rounded-xl border text-sm font-semibold"
+      >
+        {t("settings.modeDark")}
+      </button>
     </div>
   </CardContent>
 </Card>

@@ -37,6 +37,7 @@ const EvaluationPage = () => {
   const { user }        = useAuth();
   const location        = useLocation();
   const isAr            = language === "ar";
+  const { t } = useLanguage();
 
   const stateData = (location.state as any) || {};
   useEffect(() => {
@@ -196,16 +197,14 @@ const EvaluationPage = () => {
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-primary">
               <Sparkles className="w-4 h-4" />
-              {isAr ? "ملخص التقييم" : "Evaluation Summary"}
+              {t("evaluation.summary")}
             </div>
             <div className="space-y-2">
               <h1 className="text-3xl sm:text-4xl font-black text-foreground">
-                {isAr ? "أداء التعلم الخاص بك" : "Your Learning Performance"}
+                {t("evaluation.heading")}
               </h1>
               <p className="max-w-2xl text-sm text-muted-foreground">
-                {isAr
-                  ? "راقب تقدمك ومؤشرات الأداء في صفحة أنيقة ومتناسقة مع نظام Quizora."
-                  : "Track your progress and performance indicators in a clean page that matches Quizora’s visual identity."}
+                {t("evaluation.subheading")}
               </p>
             </div>
           </div>
@@ -214,7 +213,7 @@ const EvaluationPage = () => {
               <div className="flex items-center justify-between gap-3">
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                    {isAr ? "الكورسات المكتملة" : "Completed"}
+                    {t("evaluation.completed")}
                   </p>
                   <p className="text-2xl font-black text-foreground">{totalCompletedCourses}</p>
                 </div>
@@ -227,7 +226,7 @@ const EvaluationPage = () => {
               <div className="flex items-center justify-between gap-3">
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                    {isAr ? "المعدل العام" : "Average Score"}
+                    {t("evaluation.averageScore")}
                   </p>
                   <p className="text-2xl font-black text-foreground">{averageScore}%</p>
                 </div>
@@ -240,7 +239,7 @@ const EvaluationPage = () => {
               <div className="flex items-center justify-between gap-3">
                 <div className="space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-                    {isAr ? "جلسات نشطة" : "Active Sessions"}
+                    {t("evaluation.activeSessions")}
                   </p>
                   <p className="text-2xl font-black text-foreground">{totalActiveSessions}</p>
                 </div>
@@ -260,19 +259,17 @@ const EvaluationPage = () => {
                 <Sparkles className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-xl font-bold text-foreground">
-                {isAr ? "لا يوجد تقييم بعد" : "No Evaluations Yet"}
+                {t("evaluation.noEvaluations")}
               </h3>
               <p className="text-muted-foreground max-w-sm">
-                {isAr
-                  ? "ابدأ أول جلسة تدريبية لترى تقييمك ومستواك هنا"
-                  : "Start your first training session to see your evaluation and progress here"}
+                {t("evaluation.noData")}
               </p>
               <Button
                 className="bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl px-8 mt-4 shadow-button"
                 onClick={() => navigate("/courses")}
               >
                 <BookOpen className="w-4 h-4 me-2" />
-                {isAr ? "ابدأ الآن" : "Start Now"}
+                {t("evaluation.startNow")}
               </Button>
             </div>
           </Card>
@@ -287,12 +284,10 @@ const EvaluationPage = () => {
               </div>
               <div>
                 <h2 className="text-xl font-black text-foreground">
-                  {isAr ? "أكمل من حيث توقفت" : "Continue Where You Left Off"}
+                  {t("evaluation.continueWhereLeftOff")}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {isAr
-                    ? `لديك ${inProgress.length} كورس${inProgress.length > 1 ? "ات" : ""} لم تكملها بعد`
-                    : `You have ${inProgress.length} unfinished course${inProgress.length > 1 ? "s" : ""}`}
+                  {t("evaluation.finishedCourses").replace("{count}", String(inProgress.length))}
                 </p>
               </div>
             </div>
@@ -311,15 +306,15 @@ const EvaluationPage = () => {
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Clock className="w-3 h-3 text-primary" />
                             <span>
-                              {daysAgo === 0 ? (isAr ? "بدأت اليوم" : "Started today")
-                              : daysAgo === 1 ? (isAr ? "بدأت أمس"  : "Started yesterday")
-                              : isAr ? `منذ ${daysAgo} أيام` : `${daysAgo} days ago`}
+                              {daysAgo === 0 ? t("evaluation.startedToday")
+                              : daysAgo === 1 ? t("evaluation.startedYesterday")
+                              : t("evaluation.daysAgo").replace("{days}", String(daysAgo))}
                             </span>
                           </div>
                         </div>
                         <div className="flex-shrink-0 ms-3 w-14 h-14 rounded-full border-2 border-primary/40 bg-primary/10 flex flex-col items-center justify-center">
                           <span className="text-base font-black text-primary leading-none">{course.pct}%</span>
-                          <span className="text-[9px] text-muted-foreground">{isAr ? "مكتمل" : "done"}</span>
+                          <span className="text-[9px] text-muted-foreground">{t("evaluation.done")}</span>
                         </div>
                       </div>
 
@@ -327,10 +322,10 @@ const EvaluationPage = () => {
                         <div className="flex justify-between text-xs text-muted-foreground mb-1.5">
                           <span className="flex items-center gap-1">
                             <CheckCircle2 className="w-3 h-3 text-secondary" />
-                            {course.answeredQ} {isAr ? "سؤال أجبت" : "answered"}
+                            {course.answeredQ} {t("evaluation.answered")}
                           </span>
                           <span className="text-secondary font-medium">
-                            {remaining} {isAr ? "متبقي" : "remaining"}
+                            {remaining} {t("evaluation.remaining")}
                           </span>
                         </div>
                         <div className="h-2.5 bg-muted/30 rounded-full overflow-hidden">
@@ -341,7 +336,7 @@ const EvaluationPage = () => {
                         </div>
                         <div className="flex justify-between text-[10px] text-muted-foreground mt-1">
                           <span>0</span>
-                          <span>{course.totalQ} {isAr ? "سؤال" : "questions"}</span>
+                          <span>{course.totalQ} {t("evaluation.questions")}</span>
                         </div>
                       </div>
 
@@ -356,8 +351,8 @@ const EvaluationPage = () => {
                         })}
                       >
                         <PlayCircle className="w-4 h-4 me-2" />
-                        {isAr ? "أكمل الكورس" : "Continue Course"}
-                        <ArrowRight className={`w-4 h-4 ms-2 ${isAr ? "rotate-180" : ""}`} />
+                        {t("evaluation.continueCourse")}
+                        <ArrowRight className={`w-4 h-4 ms-2 ${language === "ar" ? "rotate-180" : ""}`} />
                       </Button>
                     </div>
                   </Card>
@@ -376,10 +371,10 @@ const EvaluationPage = () => {
               </div>
               <div>
                 <h2 className="text-xl font-black text-foreground">
-                  {isAr ? "نتيجتك لكل كورس" : "Your Score Per Course"}
+                  {t("evaluation.heading")}
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {isAr ? "مستوى الإتقان محسوب بخوارزمية BKT" : "Mastery level calculated using BKT algorithm"}
+                  {t("evaluation.masteryMessage")}
                 </p>
               </div>
             </div>
@@ -417,19 +412,19 @@ const EvaluationPage = () => {
                           </div>
                           <div className="space-y-1">
                             <div className="flex justify-between text-xs">
-                              <span className="text-muted-foreground">{isAr ? "الأسئلة" : "Questions"}</span>
+                              <span className="text-muted-foreground">{t("evaluation.questions")}</span>
                               <span className="text-foreground font-semibold">{course.total}</span>
                             </div>
                             <div className="flex justify-between text-xs">
-                              <span className="text-muted-foreground">{isAr ? "صحيحة" : "Correct"}</span>
+                              <span className="text-muted-foreground">{t("evaluation.correct")}</span>
                               <span className="text-secondary font-semibold">{course.correct}</span>
                             </div>
                             <div className="flex justify-between text-xs">
-                              <span className="text-muted-foreground">{isAr ? "خاطئة" : "Wrong"}</span>
+                              <span className="text-muted-foreground">{t("evaluation.wrong")}</span>
                               <span className="text-accent font-semibold">{course.total - course.correct}</span>
                             </div>
                             <div className="flex justify-between text-xs">
-                              <span className="text-muted-foreground">{isAr ? "الجلسات" : "Sessions"}</span>
+                              <span className="text-muted-foreground">{t("evaluation.sessions")}</span>
                               <span className="text-primary font-semibold">{course.sessions}</span>
                             </div>
                           </div>
@@ -448,7 +443,7 @@ const EvaluationPage = () => {
                         onClick={() => navigate("/courses")}
                       >
                         <RefreshCw className="w-3 h-3 me-1.5" />
-                        {isAr ? "تدرب مجدداً" : "Retrain"}
+                        {t("evaluation.retrain")}
                       </Button>
                     </div>
                   </Card>
@@ -466,7 +461,7 @@ const EvaluationPage = () => {
               onClick={() => navigate("/reports")}
             >
               <FileText className="w-4 h-4 me-2" />
-              {isAr ? "عرض التقارير التفصيلية" : "View Detailed Reports"}
+              {t("evaluation.reportBtn")}
             </Button>
           </div>
         )}

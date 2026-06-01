@@ -18,16 +18,24 @@ const ResetPasswordPage = () => {
   const { toast } = useToast();
   const { t } = useLanguage();
 
-  useEffect(() => {}, []);
-
   const handleResetPassword = async () => {
-    if (password !== confirmPassword) { toast({ title: "Error", description: "Passwords do not match.", variant: "destructive" }); return; }
-    if (password.length < 6) { toast({ title: "Error", description: "Password must be at least 6 characters.", variant: "destructive" }); return; }
+    if (password !== confirmPassword) {
+      toast({ title: t("common.error"), description: t("reset.passwordsMismatch"), variant: "destructive" });
+      return;
+    }
+    if (password.length < 6) {
+      toast({ title: t("common.error"), description: t("reset.tooShort"), variant: "destructive" });
+      return;
+    }
     setIsLoading(true);
     const { error } = await supabase.auth.updateUser({ password });
     setIsLoading(false);
-    if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
-    else { toast({ title: "Password updated!", description: "You can now sign in with your new password." }); navigate("/auth"); }
+    if (error) {
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: t("reset.success"), description: t("reset.updatedSuccess") });
+      navigate("/auth");
+    }
   };
 
   return (

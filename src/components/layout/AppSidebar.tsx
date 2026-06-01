@@ -56,12 +56,11 @@ const AppSidebar = ({ collapsed }: AppSidebarProps) => {
         <div className="flex items-center gap-3 px-5 py-5 border-b border-border/50">
           <img
             src={logo}
-            alt="Quizora"
+            alt={t("app.name")}
             className="w-8 h-8 object-contain"
           />
-
-          <span className="text-lg font-bold text-foreground">
-            Quizora
+          <span className="text-lg font-bold text-primary">
+            {t("app.name")}
           </span>
         </div>
 

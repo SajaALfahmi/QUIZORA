@@ -3,9 +3,11 @@ import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { BookOpen, Home } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const NotFound = () => {
   const location = useLocation();
+  const { t } = useLanguage();
 
   useEffect(() => {
     console.error("404 Error: User attempted to access non-existent route:", location.pathname);
@@ -18,11 +20,11 @@ const NotFound = () => {
           <BookOpen className="w-8 h-8 text-foreground" />
         </div>
         <h1 className="text-5xl font-bold text-foreground mb-3">404</h1>
-        <p className="text-lg text-muted-foreground mb-2">Page Not Found</p>
-        <p className="text-sm text-muted-foreground mb-8">Sorry, the page you're looking for doesn't exist or has been moved.</p>
+        <p className="text-lg text-muted-foreground mb-2">{t("notFound.title")}</p>
+        <p className="text-sm text-muted-foreground mb-8">{t("notFound.subtitle")}</p>
         <Button className="bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl px-6" onClick={() => window.location.href = "/"}>
           <Home className="w-4 h-4 mr-2" />
-          Return to Home
+          {t("notFound.home")}
         </Button>
       </Card>
     </div>

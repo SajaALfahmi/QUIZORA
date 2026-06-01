@@ -13,6 +13,7 @@ import { useState, useEffect } from "react";
 const LandingPage = () => {
   const navigate = useNavigate();
   const { t, language, setLanguage } = useLanguage();
+  const isAr = language === "ar";
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -44,79 +45,79 @@ const LandingPage = () => {
     {
       icon: Compass,
       number: "01",
-      title: "Start Learning",
-      description: "Begin solving questions tailored to your knowledge level"
+      title: t("landing.howWorksStart"),
+      description: t("landing.howWorksStartDesc")
     },
     {
       icon: Brain,
       number: "02",
-      title: "AI Analysis",
-      description: "Our AI analyzes your performance in real-time"
+      title: t("landing.howWorksAIAnalysis"),
+      description: t("landing.howWorksAIAnalysisDesc")
     },
     {
       icon: Lightbulb,
       number: "03",
-      title: "Identify Patterns",
-      description: "System detects your strengths and learning gaps"
+      title: t("landing.howWorksIdentifyPatterns"),
+      description: t("landing.howWorksIdentifyPatternsDesc")
     },
     {
       icon: Zap,
       number: "04",
-      title: "Auto Adapt",
-      description: "Difficulty adjusts automatically to challenge you optimally"
+      title: t("landing.howWorksAutoAdapt"),
+      description: t("landing.howWorksAutoAdaptDesc")
     },
     {
       icon: Target,
       number: "05",
-      title: "Generate Questions",
-      description: "Smart system creates personalized questions"
+      title: t("landing.howWorksGenerateQuestions"),
+      description: t("landing.howWorksGenerateQuestionsDesc")
     },
     {
       icon: TrendingUp,
       number: "06",
-      title: "Achieve Mastery",
-      description: "Rapid improvement through adaptive learning"
+      title: t("landing.howWorksAchieveMastery"),
+      description: t("landing.howWorksAchieveMasteryDesc")
     }
   ];
 
   const valueProps = [
     {
       icon: Brain,
-      title: "AI-Powered Learning",
-      description: "Advanced algorithms understand your learning style and adapt in real-time"
+      title: t("landing.featuresAI"),
+      description: t("landing.featuresAIDesc")
     },
     {
       icon: Compass,
-      title: "Personalized Paths",
-      description: "Custom learning journeys designed specifically for your goals"
+      title: t("landing.featuresPersonalized"),
+      description: t("landing.featuresPersonalizedDesc")
     },
     {
       icon: BarChart3,
-      title: "Real-Time Analytics",
-      description: "Track progress with detailed performance insights and metrics"
+      title: t("landing.featuresAnalytics"),
+      description: t("landing.featuresAnalyticsDesc")
     },
     {
       icon: Zap,
-      title: "Smart Generation",
-      description: "AI-generated questions that precisely target your learning needs"
+      title: t("landing.featuresSmart"),
+      description: t("landing.featuresSmartDesc")
     },
     {
       icon: Target,
-      title: "Adaptive Difficulty",
-      description: "Stay in the perfect zone of challenge for optimal learning"
+      title: t("landing.featuresAdaptive"),
+      description: t("landing.featuresAdaptiveDesc")
     },
     {
       icon: Lock,
-      title: "Secure & Private",
-      description: "Your learning data is protected with enterprise-grade security"
+      title: t("landing.featuresSecure"),
+      description: t("landing.featuresSecureDesc")
     }
   ];
 
   const stats = [
-    { number: "10K+", label: "Active Learners" },
-    { number: "50K+", label: "Questions" },
-    { number: "95%", label: "Improvement Rate" },
-    { number: "24/7", label: "Available" }
+    { number: "10K+", label: t("landing.statsActiveLearners") },
+    { number: "50K+", label: t("landing.statsQuestions") },
+    { number: "95%", label: t("landing.statsImprovementRate") },
+    { number: "24/7", label: t("landing.statsAvailable") }
   ];
 
   return (
@@ -132,8 +133,8 @@ const LandingPage = () => {
       <header className="sticky top-0 z-50 bg-background/70 backdrop-blur-2xl border-b border-border/20">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onClick={() => navigate("/")}>
-            <img src={logo} alt="Quizora" className="w-9 h-9 object-contain" />
-            <span className="text-xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent hidden sm:inline">Quizora</span>
+            <img src={logo} alt={t("app.name")} className="w-9 h-9 object-contain" />
+            <span className="text-xl font-bold text-primary hidden sm:inline">{t("app.name")}</span>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -166,13 +167,11 @@ const LandingPage = () => {
           {/* Main Heading */}
           <div className={`mb-8 transition-all duration-1000 ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-black text-foreground mb-6 leading-tight">
-              Learn Smarter with
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent animate-gradient py-2">
-                Adaptive AI
-              </span>
+              {t("landing.headline1")}
+              <span className="block text-primary py-2">{t("landing.headline2")}</span>
             </h1>
             <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Experience the future of personalized education. Quizora's advanced AI system adapts to your learning style, identifying gaps and accelerating your path to mastery.
+              {t("landing.heroDescription")}
             </p>
           </div>
 
@@ -183,7 +182,7 @@ const LandingPage = () => {
               className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-foreground font-bold shadow-2xl px-8 py-6 rounded-xl text-base transition-all duration-300 hover:scale-105 hover:shadow-primary/50" 
               onClick={() => navigate("/auth")}
             >
-              Start Free Trial
+              {t("landing.startFreeTrial")}
               <Sparkles className="w-5 h-5 ml-2" />
             </Button>
             <Button 
@@ -192,7 +191,7 @@ const LandingPage = () => {
               className="border-border/50 text-foreground hover:bg-muted/50 px-8 py-6 rounded-xl text-base transition-all duration-300 hover:scale-105" 
               onClick={() => navigate("/courses")}
             >
-              Explore Courses
+              {t("landing.viewCourses")}
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
           </div>
@@ -214,10 +213,10 @@ const LandingPage = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              How <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent">Quizora Works</span>
+              {t("landing.howWorks")}
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our intelligent system learns alongside you, continuously optimizing your learning experience
+              {t("landing.howWorksDesc")}
             </p>
           </div>
 
@@ -267,10 +266,10 @@ const LandingPage = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Why Choose <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary via-secondary to-accent">Quizora</span>
+              {t("landing.whyChoose")} <span className="text-primary">{t("app.name")}</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Built with cutting-edge AI to transform the way you learn
+              {t("landing.whyChooseDesc")}
             </p>
           </div>
 
@@ -299,10 +298,10 @@ const LandingPage = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Premium Features
+              {t("landing.premiumFeatures")}
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Everything you need for accelerated learning and success
+              {t("landing.premiumFeaturesDesc")}
             </p>
           </div>
 
@@ -335,10 +334,10 @@ const LandingPage = () => {
         <div className="max-w-4xl mx-auto">
           <div className="bg-gradient-to-br from-primary/10 to-secondary/10 border border-primary/20 rounded-3xl p-12 md:p-16 text-center backdrop-blur-sm">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              Ready to Transform Your Learning?
+              {t("landing.finalCtaTitle")}
             </h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of learners using Quizora to achieve their goals faster and smarter.
+              {t("landing.finalCtaText")}
             </p>
             <div className="flex gap-4 justify-center flex-wrap">
               <Button 
@@ -346,7 +345,7 @@ const LandingPage = () => {
                 className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-foreground font-bold shadow-2xl px-8 py-6 rounded-xl text-base transition-all duration-300 hover:scale-105" 
                 onClick={() => navigate("/auth")}
               >
-                Start Your Free Trial
+                {t("landing.startYourFreeTrial")}
                 <Rocket className="w-5 h-5 ml-2" />
               </Button>
               <Button 
@@ -355,7 +354,7 @@ const LandingPage = () => {
                 className="border-border/50 text-foreground hover:bg-muted/50 px-8 py-6 rounded-xl text-base transition-all duration-300 hover:scale-105" 
                 onClick={() => navigate("/courses")}
               >
-                View Courses
+                {t("landing.viewCourses")}
               </Button>
             </div>
           </div>
@@ -365,8 +364,8 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="relative border-t border-border/20 py-12 px-6 z-10">
         <div className="max-w-6xl mx-auto text-center text-muted-foreground">
-          <p className="mb-4">© 2026 Quizora. All rights reserved.</p>
-          <p className="text-sm">Powered by advanced AI for personalized learning</p>
+          <p className="mb-4">{t("common.footer")}</p>
+          <p className="text-sm">{t("landing.footerTag")}</p>
         </div>
       </footer>
     </div>

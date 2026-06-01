@@ -16,9 +16,15 @@ const ReportsPage = () => {
     return <AppLayout><div className="flex items-center justify-center h-96"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div></AppLayout>;
   }
 
-  const pieData = [{ name: language === "ar" ? "مكتملة" : "Completed", value: stats.completedSessions }, { name: language === "ar" ? "متبقية" : "Remaining", value: Math.max(0, stats.totalSessions - stats.completedSessions) }];
+  const pieData = [
+    { name: t("reports.completed"), value: stats.completedSessions },
+    { name: t("reports.remaining"), value: Math.max(0, stats.totalSessions - stats.completedSessions) },
+  ];
   const pieColors = ["hsl(270, 60%, 55%)", "hsl(50, 95%, 55%)"];
-  const donutData = [{ name: language === "ar" ? "صحيح" : "Correct", value: stats.totalCorrect }, { name: language === "ar" ? "خاطئ" : "Incorrect", value: Math.max(0, stats.totalQuestions - stats.totalCorrect) }];
+  const donutData = [
+    { name: t("reports.correct"), value: stats.totalCorrect },
+    { name: t("reports.incorrect"), value: Math.max(0, stats.totalQuestions - stats.totalCorrect) },
+  ];
   const donutColors = ["hsl(270, 60%, 55%)", "hsl(330, 85%, 60%)"];
   const hours = Math.round(stats.totalStudyTimeMinutes / 60);
 
