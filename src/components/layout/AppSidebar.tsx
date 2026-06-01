@@ -30,7 +30,6 @@ const AppSidebar = ({ collapsed }: AppSidebarProps) => {
     { label: t("nav.learningTrack"), icon: BookOpen, path: "/courses" },
     { label: t("nav.continueLearning"), icon: PlayCircle, path: "/continue-learning" },
     { label: t("nav.results"), icon: FileText, path: "/evaluation" },
-    { label: t("nav.assessments"), icon: CheckCircle, path: "/questions" },
     { label: t("nav.profile"), icon: User, path: "/profile" },
     { label: t("nav.reports"), icon: BarChart3, path: "/reports" },
   ];
