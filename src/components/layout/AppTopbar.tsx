@@ -2,7 +2,8 @@ import { Home, Bell, LogOut, Globe, Menu } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import logo from "@/assets/logo.png";
+// تم الإبقاء على استدعاء اللوجو هنا إذا كان مستخدماً في مكان آخر، أو يمكنك تركه لمنع إيرور الـ Imports
+import logo from "@/assets/logo.png"; 
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +37,7 @@ const AppTopbar = ({
   return (
     <header className="sticky top-0 z-30 bg-background/80 backdrop-blur-xl border-b border-border/50">
       <div className="flex items-center justify-between gap-4 px-6 py-3">
+        {/* زر السايد بار يظل ثابتاً في مكانه */}
         <button
           onClick={onToggleSidebar}
           className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
@@ -43,21 +45,12 @@ const AppTopbar = ({
           <Menu className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-2.5">
-          <div
-            className="flex items-center gap-2.5 cursor-pointer"
-            onClick={() => navigate("/dashboard")}
-          >
-            <img
-              src={logo}
-              alt={t("app.name")}
-              className="w-6 h-6 md:w-7 md:h-7 object-contain"
-            />
-            <span className="text-base md:text-lg font-bold text-primary hidden sm:inline">
-              {t("app.name")}
-            </span>
-          </div>
+        {/* 🌟 مساحة مرنة (Spacer) تدفع بقية العناصر إلى جهة اليمين بالتساوي بعد حذف التكرار */}
+        <div className="flex-1" />
 
+        {/* قائمة الأزرار العلوية النظيفة - تم حذف اللوقو والاسم المكرر بنجاح */}
+        <div className="flex items-center gap-2.5">
+          
           <button
             onClick={() => setLanguage(language === "en" ? "ar" : "en")}
             className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5"
