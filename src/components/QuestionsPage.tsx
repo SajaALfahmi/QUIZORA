@@ -711,22 +711,21 @@ const QuestionsPage = () => {
               </Card>
             )}
 
-            {/* Buttons */}
-            <div className="flex justify-end gap-3">
+            {/* Action Button */}
+            <div className="flex justify-end mt-4">
               {!showResult ? (
                 <Button
-                  disabled={!selectedAnswer || isSubmitting}
                   onClick={handleSubmitAnswer}
-                  className="rounded-xl bg-gradient-to-r from-violet-600 to-pink-600 text-white font-semibold px-8 shadow-lg shadow-violet-500/25 disabled:opacity-50"
+                  disabled={!selectedAnswer || isSubmitting}
+                  className="px-6 py-5 rounded-xl bg-gradient-to-r from-violet-600 to-pink-600 text-white font-bold transition-all shadow-md"
                 >
-                  {isSubmitting
-                    ? <><Loader2 className="w-4 h-4 me-2 animate-spin" />{t("questions.checking")}</>
-                    : <><Check className="w-4 h-4 me-2" />{t("questions.submitAnswer")}</>}
+                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin me-2" /> : null}
+                  {t("questions.submitAnswer")}
                 </Button>
               ) : (
                 <Button
                   onClick={handleNext}
-                  className="rounded-xl bg-gradient-to-r from-violet-600 to-pink-600 text-white font-semibold px-8 shadow-lg"
+                  className="px-6 py-5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold transition-all shadow-md"
                 >
                   {t("questions.nextQuestion")}
                   <ArrowRight className={`w-4 h-4 ms-2 ${isAr ? "rotate-180" : ""}`} />
@@ -734,12 +733,12 @@ const QuestionsPage = () => {
               )}
             </div>
           </>
-        ) : null}
+        ) : (
+          <div className="text-center py-12 text-muted-foreground">
+            {isAr ? "لا توجد أسئلة متاحة حالياً." : "No questions available currently."}
+          </div>
+        )}
       </div>
-
-      <footer className="border-t border-border/50 bg-muted/30 py-4 text-center">
-        <p className="text-sm text-muted-foreground">{t("app.copyright")}</p>
-      </footer>
     </div>
   );
 };
