@@ -4,7 +4,7 @@ import AppTopbar from "./AppTopbar";
 import { useLanguage } from "@/contexts/LanguageContext";
 
 const AppLayout = ({ children }: { children: ReactNode }) => {
-  const { t } = useLanguage();
+  const { t, dir } = useLanguage();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const handleToggleSidebar = () => {
@@ -18,8 +18,12 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
       <div
         className={`flex flex-col min-h-screen transition-all duration-300 ${
           sidebarCollapsed
-            ? "ml-0 rtl:mr-0"
-            : "ml-56 rtl:mr-56"
+            ? dir === "ltr"
+              ? "ml-0"
+              : "mr-0"
+            : dir === "ltr"
+            ? "ml-56"
+            : "mr-56"
         }`}
       >
         <AppTopbar onToggleSidebar={handleToggleSidebar} />
