@@ -97,22 +97,35 @@ const Dashboard = () => {
               {t("dashboard.startNow")}<ArrowRight className="w-4 h-4 ml-2" />
             </Button>
           </Card>
+<Card
+  className="bg-card/80 border border-border/30 hover:border-accent/50 transition-all duration-300 cursor-pointer p-6 text-center flex flex-col justify-between min-h-[360px]"
+  onClick={() => navigate("/continue-learning")}
+>
+  <div>
+    <div className="p-4 rounded-2xl bg-gradient-to-br from-accent to-accent/40 w-fit mx-auto mb-4">
+      <HelpCircle className="w-8 h-8 text-foreground" />
+    </div>
 
-          <Card className="bg-card/80 border border-border/30 hover:border-accent/50 transition-all duration-300 cursor-pointer p-6 text-center flex flex-col justify-between min-h-[360px]" onClick={() => navigate("/continue-learning") }>
-            <div>
-              <div className="p-4 rounded-2xl bg-gradient-to-br from-accent to-accent/40 w-fit mx-auto mb-4">
-                <HelpCircle className="w-8 h-8 text-foreground" />
-              </div>
-              <h3 className="text-xl font-extrabold text-foreground mb-2">{t("dashboard.continueLearning")}</h3>
-            </div>
-            <Button
-              className="w-full h-12 bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl"
-              onClick={(event) => { event.stopPropagation(); navigate("/continue-learning"); }}
-            >
-              {t("dashboard.continueLearning")}
-              <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
-          </Card>
+    <h3 className="text-xl font-extrabold text-foreground mb-2">
+      {t("dashboard.continueLearning")}
+    </h3>
+
+    <p className="text-sm text-muted-foreground mb-5">
+      Continue your previous learning sessions and track your progress.
+    </p>
+  </div>
+
+  <Button
+    className="w-full h-12 bg-gradient-to-r from-primary to-secondary text-foreground font-semibold rounded-xl"
+    onClick={(event) => {
+      event.stopPropagation();
+      navigate("/continue-learning");
+    }}
+  >
+    {t("dashboard.continueLearning")}
+    <ArrowRight className="w-4 h-4 ml-2" />
+  </Button>
+</Card>
 
           <Card className="bg-card/80 border border-border/30 hover:border-secondary/50 transition-all duration-300 cursor-pointer p-6 text-center flex flex-col justify-between min-h-[360px]" onClick={() => navigate("/evaluation") }>
             <div>
