@@ -27,8 +27,8 @@ export interface UserStats {
     questions_attempted: number;
     questions_correct: number;
   }[];
-  weeklyActivity: { day: string; questions: number }[];
-  monthlyScores: { month: string; score: number }[];
+  weeklyActivity: { day: string; questions: number; minutes: number }[];
+  monthlyScores: { month: string; score: number; monthIndex: number }[];
   loading: boolean;
 }
 
@@ -48,7 +48,7 @@ export function useUserStats(): UserStats {
     totalStudyTimeMinutes: 0,
     recentSessions: [],
     skillLevels: [],
-    weeklyActivity: DAYS.map((d) => ({ day: d, questions: 0 })),
+    weeklyActivity: DAYS.map((d) => ({ day: d, questions: 0, minutes: 0 })),
     monthlyScores: [],
     loading: true,
   });
@@ -56,7 +56,7 @@ export function useUserStats(): UserStats {
   useEffect(() => {
     if (!user) return;
 
-    const fetch = async () => {
+    const fetchStats = async () => {
       const [sessionsRes, answersRes, progressRes, skillsRes, skillLevelsRes] = await Promise.all([
         supabase
           .from("learning_sessions")
@@ -86,29 +86,67 @@ export function useUserStats(): UserStats {
 
       const completedSessions = sessions.filter((s) => s.status === "completed");
       const totalCorrect      = answers.filter((a) => a.is_correct).length;
-      const avgScore          = answers.length > 0 ? Math.round((totalCorrect / answers.length) * 100) : 0;
-      const uniqueCourses     = new Set(sessions.map((s) => s.course_id)).size;
-      const maxStreak         = progress.reduce((max, p) => Math.max(max, p.current_streak), 0);
-      const totalTime         = answers.reduce((sum, a) => sum + (a.time_spent_seconds ?? 0), 0);
+      const avgScore          = answers.length > 0
+        ? Math.round((totalCorrect / answers.length) * 100)
+        : 0;
+      const uniqueCourses = new Set(sessions.map((s) => s.course_id)).size;
+      const maxStreak     = progress.reduce((max, p) => Math.max(max, p.current_streak), 0);
 
-      // ── Weekly activity (last 7 days) ──
-      const weeklyMap: Record<string, number> = {};
-      DAYS.forEach((d) => (weeklyMap[d] = 0));
+      // ✅ حساب وقت الدراسة
+      let totalTimeSeconds = 0;
+      completedSessions.forEach((s) => {
+        if (s.completed_at && s.started_at) {
+          const diff = (new Date(s.completed_at).getTime() - new Date(s.started_at).getTime()) / 1000;
+          if (diff > 0 && diff < 7200) totalTimeSeconds += diff;
+        }
+      });
+
+      if (totalTimeSeconds === 0) {
+        totalTimeSeconds = answers.reduce((sum, a) => {
+          const t = a.time_spent_seconds ?? 0;
+          return sum + (t < 1 ? 45 : t);
+        }, 0);
+      }
+
+      if (totalTimeSeconds < 60 && completedSessions.length > 0) {
+        totalTimeSeconds = completedSessions.length * 120;
+      }
+
+      const totalStudyTimeMinutes = Math.round(totalTimeSeconds / 60);
+
+      // ✅ Weekly activity
+      const weeklyQMap: Record<string, number> = {};
+      const weeklyMMap: Record<string, number> = {};
+      DAYS.forEach((d) => { weeklyQMap[d] = 0; weeklyMMap[d] = 0; });
       const now = new Date();
       answers.forEach((a) => {
         const d    = new Date(a.answered_at);
         const diff = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
-        if (diff <= 7) weeklyMap[DAYS[d.getDay()]] += 1;
+        if (diff <= 7) {
+          const dayName = DAYS[d.getDay()];
+          weeklyQMap[dayName] += 1;
+          weeklyMMap[dayName] += Math.round((a.time_spent_seconds ?? 45) / 60);
+        }
       });
 
-      // ── Monthly scores — محسوبة من user_answers مباشرة ──
-      const monthlyMap: Record<string, { correct: number; total: number }> = {};
+      // ✅ Monthly scores مرتبة زمنياً
+      const monthlyMap: Record<number, { correct: number; total: number; name: string }> = {};
       answers.forEach((a) => {
-        const m = MONTHS[new Date(a.answered_at).getMonth()];
-        if (!monthlyMap[m]) monthlyMap[m] = { correct: 0, total: 0 };
-        monthlyMap[m].total += 1;
-        if (a.is_correct) monthlyMap[m].correct += 1;
+        const monthIndex = new Date(a.answered_at).getMonth();
+        if (!monthlyMap[monthIndex]) {
+          monthlyMap[monthIndex] = { correct: 0, total: 0, name: MONTHS[monthIndex] };
+        }
+        monthlyMap[monthIndex].total += 1;
+        if (a.is_correct) monthlyMap[monthIndex].correct += 1;
       });
+
+      const sortedMonthlyScores = Object.entries(monthlyMap)
+        .sort(([a], [b]) => Number(a) - Number(b))
+        .map(([idx, v]) => ({
+          month:      v.name,
+          monthIndex: Number(idx),
+          score:      v.total > 0 ? Math.round((v.correct / v.total) * 100) : 0,
+        }));
 
       const skillMap = new Map(skills.map((s) => [s.id, s.name]));
 
@@ -120,24 +158,25 @@ export function useUserStats(): UserStats {
         averageScore:          avgScore,
         coursesStarted:        uniqueCourses,
         currentStreak:         maxStreak,
-        totalStudyTimeMinutes: Math.round(totalTime / 60),
+        totalStudyTimeMinutes,
         recentSessions:        sessions.slice(0, 10),
         skillLevels: skillLevels.map((sl) => ({
-          skill_name:           skillMap.get(sl.skill_id) ?? "Unknown",
-          mastery_level:        sl.mastery_level,
-          questions_attempted:  sl.questions_attempted,
-          questions_correct:    sl.questions_correct,
+          skill_name:          skillMap.get(sl.skill_id) ?? "Unknown",
+          mastery_level:       sl.mastery_level,
+          questions_attempted: sl.questions_attempted,
+          questions_correct:   sl.questions_correct,
         })),
-        weeklyActivity: DAYS.map((d) => ({ day: d, questions: weeklyMap[d] })),
-        monthlyScores:  Object.entries(monthlyMap).map(([month, v]) => ({
-          month,
-          score: v.total > 0 ? Math.round((v.correct / v.total) * 100) : 0,
+        weeklyActivity: DAYS.map((d) => ({
+          day:       d,
+          questions: weeklyQMap[d],
+          minutes:   weeklyMMap[d],
         })),
+        monthlyScores: sortedMonthlyScores,
         loading: false,
       });
     };
 
-    fetch();
+    fetchStats();
   }, [user]);
 
   return stats;
