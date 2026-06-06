@@ -47,6 +47,7 @@ interface StartSessionPayload {
   course_id: string;
   total_questions?: number;
   difficulty_mode?: string;
+  language?: string;
 }
 
 Deno.serve(async (req: Request) => {
@@ -93,7 +94,7 @@ Deno.serve(async (req: Request) => {
     }
     if (action === "next-question") {
       const body = await req.json();
-      return await handleNextQuestion(supabaseService, userId, body.session_id);
+      return await handleNextQuestion(supabaseService, userId, body.session_id, body.language);
     }
     if (action === "end-session") {
       const body = await req.json();
@@ -114,9 +115,10 @@ Deno.serve(async (req: Request) => {
 });
 
 async function handleStartSession(supabaseService: any, userId: string, payload: StartSessionPayload) {
-  const { course_id, total_questions, difficulty_mode } = payload;
+  const { course_id, total_questions, difficulty_mode, language } = payload;
+  const sessionLanguage = language === "ar" ? "ar" : "en";
 
-  await ensureCourseExists(supabaseService, course_id);
+  await ensureCourseExists(supabaseService, course_id, sessionLanguage);
 
   const { data: session, error } = await supabaseService
     .from("learning_sessions")
@@ -202,13 +204,15 @@ async function handleSubmitAnswer(supabaseService: any, userId: string, payload:
   });
 }
 
-async function handleNextQuestion(supabaseService: any, userId: string, sessionId: string) {
+async function handleNextQuestion(supabaseService: any, userId: string, sessionId: string, requestedLanguage: string = "en") {
   if (!sessionId) {
     return new Response(JSON.stringify({ error: "session_id is required" }), {
       status: 400,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
+
+  requestedLanguage = requestedLanguage === "ar" ? "ar" : "en";
 
   const { data: session, error: sessionError } = await supabaseService
     .from("learning_sessions")
@@ -279,7 +283,11 @@ async function handleNextQuestion(supabaseService: any, userId: string, sessionI
 
   const preferred = remaining.filter((q: any) => q.difficulty === targetDifficulty);
   const pool = preferred.length > 0 ? preferred : remaining;
-  const nextQuestion = pool[Math.floor(Math.random() * pool.length)];
+  let nextQuestion = pool[Math.floor(Math.random() * pool.length)];
+
+  if (needsTranslation(nextQuestion.content, requestedLanguage)) {
+    nextQuestion = await translateQuestion(nextQuestion, requestedLanguage);
+  }
 
   return new Response(
     JSON.stringify({ question: nextQuestion, finished: false, difficulty_target: targetDifficulty }),
@@ -308,7 +316,7 @@ async function handleEndSession(supabaseService: any, userId: string, sessionId:
   });
 }
 
-async function ensureCourseExists(supabaseService: any, courseId: string) {
+async function ensureCourseExists(supabaseService: any, courseId: string, language: string = "ar") {
   const { data: existingCourse } = await supabaseService
     .from("courses")
     .select("id, sub_category")
@@ -355,11 +363,11 @@ async function ensureCourseExists(supabaseService: any, courseId: string) {
     .from("questions").select("id", { count: "exact", head: true }).eq("course_id", courseId);
 
   if ((count ?? 0) < 50 && skillId) {
-    await generateAIQuestions(supabaseService, courseId, skillId, subCategory);
+    await generateAIQuestions(supabaseService, courseId, skillId, subCategory, language);
   }
 }
 
-async function generateAIQuestions(supabaseService: any, courseId: string, skillId: string, subCategory: string) {
+async function generateAIQuestions(supabaseService: any, courseId: string, skillId: string, subCategory: string, language: string = "ar") {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) return;
 
@@ -371,8 +379,14 @@ async function generateAIQuestions(supabaseService: any, courseId: string, skill
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
-          { role: "system", content: "You are an expert question generator for Saudi standardized tests. Generate questions in Arabic. Always respond with valid JSON only." },
-          { role: "user", content: buildQuestionPrompt(subCategory, 25, difficulty) },
+          {
+            role: "system",
+            content:
+              language === "ar"
+                ? "You are an expert question generator for Saudi standardized tests. Generate questions in Arabic. Always respond with valid JSON only."
+                : "You are an expert question generator for Saudi standardized tests. Generate questions in English. Always respond with valid JSON only.",
+          },
+          { role: "user", content: buildQuestionPrompt(subCategory, 25, difficulty, language) },
         ],
         response_format: { type: "json_object" },
       }),
@@ -399,44 +413,103 @@ async function generateAIQuestions(supabaseService: any, courseId: string, skill
   }
 }
 
-function buildQuestionPrompt(subCategory: string, count: number, difficulty: string): string {
+function buildQuestionPrompt(subCategory: string, count: number, difficulty: string, language: string): string {
   const categoryMap: Record<string, string> = {
-    verbal: "اختبار القدرات العامة - الجزء اللفظي",
-    quantitative: "اختبار القدرات العامة - الجزء الكمي",
-    mathematics: "الرياضيات - الثانوية العامة",
-    physics: "الفيزياء - الثانوية العامة",
-    chemistry: "الكيمياء - الثانوية العامة",
-    biology: "الأحياء - الثانوية العامة",
-    ccna: "CCNA - شهادة تقنية",
+    verbal: language === "ar" ? "اختبار القدرات العامة - الجزء اللفظي" : "Qudurat - Verbal",
+    quantitative: language === "ar" ? "اختبار القدرات العامة - الجزء الكمي" : "Qudurat - Quantitative",
+    mathematics: language === "ar" ? "الرياضيات - الثانوية العامة" : "Tahseeli - Mathematics",
+    physics: language === "ar" ? "الفيزياء - الثانوية العامة" : "Tahseeli - Physics",
+    chemistry: language === "ar" ? "الكيمياء - الثانوية العامة" : "Tahseeli - Chemistry",
+    biology: language === "ar" ? "الأحياء - الثانوية العامة" : "Tahseeli - Biology",
+    ccna: language === "ar" ? "CCNA - شهادة تقنية" : "CCNA - Technical Certification",
     security: "CompTIA Security+",
     aws: "AWS Cloud Practitioner",
-    pmp: "PMP - إدارة المشاريع",
+    pmp: language === "ar" ? "PMP - إدارة المشاريع" : "PMP - Project Management",
   };
 
   const difficultyMap: Record<string, string> = {
-    easy: "سهل - أسئلة أساسية",
-    medium: "متوسط - أسئلة معتدلة",
-    hard: "صعب - أسئلة متقدمة",
+    easy: language === "ar" ? "سهل - أسئلة أساسية" : "Easy - Basic questions",
+    medium: language === "ar" ? "متوسط - أسئلة معتدلة" : "Medium - Moderate questions",
+    hard: language === "ar" ? "صعب - أسئلة متقدمة" : "Hard - Advanced questions",
   };
 
-  return `Generate ${count} unique multiple-choice questions in Arabic for:
-Subject: ${categoryMap[subCategory] || subCategory}
-Difficulty: ${difficultyMap[difficulty]}
+  if (language === "ar") {
+    return `Generate ${count} unique multiple-choice questions in Arabic for:\nSubject: ${categoryMap[subCategory] || subCategory}\nDifficulty: ${difficultyMap[difficulty]}\n\nReturn JSON:\n{\n  "questions": [\n    {\n      "content": "نص السؤال",\n      "explanation": "شرح مفصل",\n      "options": [\n        { "content": "خيار", "is_correct": false },\n        { "content": "خيار صحيح", "is_correct": true },\n        { "content": "خيار", "is_correct": false },\n        { "content": "خيار", "is_correct": false }\n      ]\n    }\n  ]\n}\nRequirements: ${count} unique questions, exactly 4 options each, exactly 1 correct, all Arabic.`;
+  }
 
-Return JSON:
-{
-  "questions": [
-    {
-      "content": "نص السؤال",
-      "explanation": "شرح مفصل",
-      "options": [
-        { "content": "خيار", "is_correct": false },
-        { "content": "خيار صحيح", "is_correct": true },
-        { "content": "خيار", "is_correct": false },
-        { "content": "خيار", "is_correct": false }
-      ]
-    }
-  ]
+  return `Generate ${count} unique multiple-choice questions in English for:\nSubject: ${categoryMap[subCategory] || subCategory}\nDifficulty: ${difficultyMap[difficulty]}\n\nReturn JSON:\n{\n  "questions": [\n    {\n      "content": "question text",\n      "explanation": "detailed explanation",\n      "options": [\n        { "content": "option", "is_correct": false },\n        { "content": "correct option", "is_correct": true },\n        { "content": "option", "is_correct": false },\n        { "content": "option", "is_correct": false }\n      ]\n    }\n  ]\n}\nRequirements: ${count} unique questions, exactly 4 options each, exactly 1 correct, all English.`;
 }
-Requirements: ${count} unique questions, exactly 4 options each, exactly 1 correct, all Arabic.`;
+
+function needsTranslation(content: string, targetLang: string) {
+  const hasArabic = /[\u0600-\u06FF]/.test(content);
+  const hasEnglish = /[A-Za-z]/.test(content);
+  if (targetLang === "ar") return !hasArabic && hasEnglish;
+  return !hasEnglish && hasArabic;
+}
+
+async function translateQuestion(question: any, targetLang: string) {
+  const apiKey = Deno.env.get("OPENAI_API_KEY");
+  if (!apiKey) return question;
+
+  const languageName = targetLang === "ar" ? "Arabic" : "English";
+  const sourceLanguage = targetLang === "ar" ? "English" : "Arabic";
+  const optionsText = (question.answer_options || [])
+    .sort((a: any, b: any) => a.order_index - b.order_index)
+    .map((opt: any) => `- ${opt.content} (${opt.is_correct ? "correct" : "wrong"})`)
+    .join("\n");
+
+  const prompt = `Translate the following multiple-choice question from ${sourceLanguage} to ${languageName}. Keep the meaning and answer correctness the same. Return JSON only with this shape:\n{\n  "content": "...",\n  "explanation": "...",\n  "options": [\n    { "id": "...", "content": "...", "is_correct": true, "order_index": 0 }\n  ]\n}\n\nQuestion:\n${question.content}\n\nExplanation:\n${question.explanation || ""}\n\nOptions:\n${optionsText}`;
+
+  const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a translator for quiz questions. Reply with valid JSON only.",
+        },
+        { role: "user", content: prompt },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0.2,
+    }),
+  });
+
+  if (!aiResponse.ok) {
+    return question;
+  }
+
+  const aiData = await aiResponse.json();
+  const translated = aiData?.choices?.[0]?.message?.content;
+  if (!translated) return question;
+
+  let parsedResult: any = translated;
+  if (typeof translated === "string") {
+    try {
+      parsedResult = JSON.parse(translated);
+    } catch {
+      return question;
+    }
+  }
+
+  if (!parsedResult?.content || !Array.isArray(parsedResult.options)) {
+    return question;
+  }
+
+  return {
+    ...question,
+    content: parsedResult.content,
+    explanation: parsedResult.explanation || question.explanation,
+    answer_options: (parsedResult.options || []).map((opt: any) => ({
+      id: opt.id || opt.id,
+      content: opt.content || "",
+      is_correct: opt.is_correct ?? false,
+      order_index: opt.order_index ?? 0,
+    })),
+  };
 }

@@ -7,10 +7,10 @@ function throwFunctionError(error: any): never {
 }
 
 export const adaptiveEngine = {
-  startSession: async (courseId: string, totalQuestions: number, difficultyMode: string = "auto") => {
+  startSession: async (courseId: string, totalQuestions: number, difficultyMode: string = "auto", language: string = "en") => {
     const { data: { session } } = await supabase.auth.getSession();
     const { data, error } = await supabase.functions.invoke("adaptive-engine", {
-      body: JSON.stringify({ course_id: courseId, total_questions: totalQuestions, difficulty_mode: difficultyMode }),
+      body: JSON.stringify({ course_id: courseId, total_questions: totalQuestions, difficulty_mode: difficultyMode, language }),
       headers: { Authorization: `Bearer ${session?.access_token}`, "Content-Type": "application/json", "x-action": "start-session" },
     });
     if (error) throwFunctionError(error);
@@ -27,10 +27,10 @@ export const adaptiveEngine = {
     return data;
   },
 
-  getNextQuestion: async (sessionId: string, difficultyMode: string = "auto") => {
+  getNextQuestion: async (sessionId: string, difficultyMode: string = "auto", language: string = "en") => {
     const { data: { session } } = await supabase.auth.getSession();
     const { data, error } = await supabase.functions.invoke("adaptive-engine", {
-      body: JSON.stringify({ session_id: sessionId, difficulty_mode: difficultyMode }),
+      body: JSON.stringify({ session_id: sessionId, difficulty_mode: difficultyMode, language }),
       headers: { Authorization: `Bearer ${session?.access_token}`, "Content-Type": "application/json", "x-action": "next-question" },
     });
     if (error) throwFunctionError(error);

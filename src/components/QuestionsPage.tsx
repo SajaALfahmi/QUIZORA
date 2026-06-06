@@ -251,7 +251,7 @@ const QuestionsPage = () => {
           })
         );
 
-        await fetchNextQuestion(resumeSessionId);
+        await fetchNextQuestion(resumeSessionId, selectedDifficulty, language);
       } catch (error: any) {
         toast({ title: "Error", description: error?.message || "Unable to resume session.", variant: "destructive" });
         setShowSettings(true);
@@ -287,14 +287,14 @@ const QuestionsPage = () => {
       }
       const result = await adaptiveEngine.startSession(currentCourseId, selectedCount, selectedDifficulty);
       setSessionId(result.session.id);
-      await fetchNextQuestion(result.session.id, selectedDifficulty);
+      await fetchNextQuestion(result.session.id, selectedDifficulty, language);
     } catch (error: any) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
       navigate("/courses");
     }
   };
 
-  const fetchNextQuestion = async (sid: string, diffMode?: string) => {
+  const fetchNextQuestion = async (sid: string, diffMode?: string, lang: string = language) => {
     try {
       setIsLoading(true);
       setLoadingMessage(getRandomLoadingMessage());
@@ -348,6 +348,7 @@ const QuestionsPage = () => {
         question_id: currentQuestion.id,
         user_answer: selectedOpt?.content,
         correct_answer: correctOpt?.content,
+        language,
       });
       setExplanation(result.explanation);
     } catch (error: any) {
@@ -361,7 +362,7 @@ const QuestionsPage = () => {
       setFinished(true);
       return;
     }
-    if (sessionId) fetchNextQuestion(sessionId, selectedDifficulty);
+    if (sessionId) fetchNextQuestion(sessionId, selectedDifficulty, language);
   };
 
   const handleEndSession = async () => {
