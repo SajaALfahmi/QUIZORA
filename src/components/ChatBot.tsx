@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
+import { supabase } from "@/integrations/supabase/client";
 
-// أيقونة روبوت جرافيك عصرية (SVG) بديلة للإيموجي 🤖 وتتناسق مع التصميم الأنيق للموقع
 const RobotIcon = ({ className = "w-5 h-5" }) => (
   <svg
     viewBox="0 0 24 24"
@@ -39,8 +39,6 @@ export default function ChatBot() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  
-  // مرجع لعمل سكرول تلقائي لأسفل المحادثة عند وصول رسائل جديدة
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -60,34 +58,52 @@ export default function ChatBot() {
     if (!input.trim() || loading) return;
     const userMessage = { role: "user", content: input };
     setMessages(prev => [...prev, userMessage]);
+    const currentInput = input;
     setInput("");
     setLoading(true);
 
-    // صياغة الـ System Prompt الجديد لتحديد هوية ونطاق عمل المنصة الفعلي بدقة
+    // تخزين سؤال اليوزر
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await (supabase as any).from("chat_history").insert({
+          user_id: user.id,
+          role: "user",
+          content: currentInput,
+        });
+      }
+    } catch (err) {
+      console.error("Error saving user message:", err);
+    }
+
     const systemContent = isArabic
       ? `أنت المساعد الذكي الرسمي لمنصة Quizora (منصة اختبارات ذكية وتوليد أسئلة تفاعلية تعتمد على خوارزمية الـ BKT).
+يجب أن تتجاوب دائماً بنفس لغة المستخدم. إذا كتب بالعربي رد بالعربي، وإذا كتب بالإنجليزي رد بالإنجليزي.
+
 وظيفتك الوحيدة: الإجابة على أسئلة الطلاب العلمية وشرح المفاهيم في المواد المتاحة فقط، ومساعدتهم في فهم طريقة عمل المنصة.
 
 قواعد صارمة التزم بها تماماً:
-1. المنصة تقدم (أسئلة، خيارات متعددة، تقييم ذكي، وشروحات للإجابات) وليس بها كورسات فيديو أو مشاريع أو دعم عملاء. لا تقترح على الطالب التواصل مع دعم العملاء أو مراجعة مشاريع.
-2. الكورسات والمواد المتاحة حالياً لتقديم الأسئلة والاختبارات الذكية هي:
+1. المنصة تقدم (أسئلة، خيارات متعددة، تقييم ذكي، وشروحات للإجابات) وليس بها كورسات فيديو أو مشاريع أو دعم عملاء.
+2. الكورسات المتاحة حالياً:
    - القدرات: كمّي، ولفظي.
-   - التحصيلي (القسم العلمي): كيمياء، وأحياء فقط. (تنبيه هام جداً: الرياضيات والفيزياء هي عمل مستقبلي Future Work وغير مدعومة حالياً في النظام).
-   - الشهادات المهنية العالمية: CCNA، و CompTIA Security+، و AWS Cloud Practitioner، و PMP.
-3. إذا سألك الطالب عن مادة غير مدعومة أو مادة تندرج تحت العمل المستقبلي (كالرياضيات والفيزياء في التحصيلي)، أخبره مباشرة بذكاء: "هذه المادة تندرج حالياً ضمن خطتنا للعمل المستقبلي (Future Work) وقريباً ستكون متاحة للاختبارات التفاعلية".
-4. إجاباتك يجب أن تكون مختصرة، مباشرة، ومصقولة برمجياً وعلمياً بدون مقدمات طويلة وتجنب تماماً تخيل ميزات غير موجودة بالمنصة.`
+   - التحصيلي (القسم العلمي): كيمياء، وأحياء فقط. (الرياضيات والفيزياء Future Work غير مدعومة حالياً).
+   - الشهادات المهنية: CCNA، CompTIA Security+، AWS Cloud Practitioner، PMP.
+3. إذا سألك الطالب عن مادة غير مدعومة أخبره: "هذه المادة تندرج حالياً ضمن خطتنا للعمل المستقبلي وقريباً ستكون متاحة".
+4. إجاباتك مختصرة ومباشرة بدون مقدمات طويلة.`
       : `You are the official smart assistant for Quizora (an AI-powered smart testing and adaptive question platform running on BKT algorithm).
+You must always respond in the same language the user writes in. If the user writes in Arabic, respond in Arabic. If in English, respond in English.
+
 Your sole purpose is to answer educational questions, explain concepts for the CURRENTLY AVAILABLE courses only, and guide students on how the testing platform works.
 
-Strict Rules to Follow:
-1. The platform ONLY provides (Multiple-choice questions, adaptive quizzes via BKT, and answer explanations). There are NO video courses, certificates, assignments, projects, or customer support. Never ask the user to contact support or submit projects.
-2. The ONLY currently active courses for testing are:
+Strict Rules:
+1. The platform ONLY provides (Multiple-choice questions, adaptive quizzes via BKT, and answer explanations). No video courses, certificates, assignments, or customer support.
+2. Currently active courses:
    - Qudurat: Quantitative and Verbal.
-   - Tahsili (Science): Chemistry and Biology ONLY. (CRITICAL: Mathematics and Physics are strictly marked as Future Work and NOT available right now in the system).
+   - Tahsili (Science): Chemistry and Biology ONLY. (Mathematics and Physics are Future Work and NOT available).
    - Professional Certifications: CCNA, CompTIA Security+, AWS Cloud Practitioner, and PMP.
-3. If a student asks about an unsupported subject or a future work subject (like Math or Physics in Tahsili), reply directly and smartly: "This subject is currently part of our Future Work roadmap and will be available for adaptive testing soon."
-4. Keep your responses concise, direct, professional, and never hallucinate features or services that do not exist on Quizora.`;
-    
+3. If a student asks about an unsupported subject reply: "This subject is currently part of our Future Work roadmap and will be available soon."
+4. Keep responses concise, direct, and professional.`;
+
     try {
       const response = await fetch("https://api.openai.com/v1/chat/completions", {
         method: "POST",
@@ -98,17 +114,30 @@ Strict Rules to Follow:
         body: JSON.stringify({
           model: "gpt-4o-mini",
           messages: [
-            {
-              role: "system",
-              content: systemContent
-            },
+            { role: "system", content: systemContent },
             ...messages,
             userMessage
           ],
         }),
       });
       const data = await response.json();
-      setMessages(prev => [...prev, { role: "assistant", content: data.choices[0].message.content }]);
+      const assistantContent = data.choices[0].message.content;
+      setMessages(prev => [...prev, { role: "assistant", content: assistantContent }]);
+
+      // تخزين رد المساعد
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          await (supabase as any).from("chat_history").insert({
+            user_id: user.id,
+            role: "assistant",
+            content: assistantContent,
+          });
+        }
+      } catch (err) {
+        console.error("Error saving assistant message:", err);
+      }
+
     } catch (error) {
       console.error("Error connecting to OpenAI:", error);
     } finally {
@@ -118,7 +147,6 @@ Strict Rules to Follow:
 
   return (
     <>
-      {/* زر تفعيل الشات العائم السفلي - يتطابق مع تدرجات النظام وألوانه الاحترافية */}
       <button
         onClick={toggleChat}
         className="fixed bottom-6 right-6 z-[9999] w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center shadow-lg transition-transform active:scale-95 focus:outline-none"
@@ -133,13 +161,11 @@ Strict Rules to Follow:
         )}
       </button>
 
-      {/* صندوق المحادثة الرئيسي - يدعم الوضعين المظلم والمضيء بشكل انسيابي مميز */}
       {open && (
-        <div 
+        <div
           className="fixed bottom-24 right-6 z-[9999] w-[340px] md:w-[360px] h-[460px] bg-card text-card-foreground border border-border shadow-2xl rounded-2xl flex flex-col overflow-hidden transition-all duration-300 animate-in fade-in slide-in-from-bottom-5"
           style={{ direction: isArabic ? "rtl" : "ltr" }}
         >
-          {/* رأس الشات بوت - مدمج مع تدرج لوني خفيف من هوية الموقع (بدون ألوان حادة) */}
           <div className="px-4 py-3 bg-gradient-to-r from-primary/10 via-secondary/5 to-transparent border-b border-border/80 flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-sm shrink-0">
               <RobotIcon className="w-4 h-4" />
@@ -155,24 +181,22 @@ Strict Rules to Follow:
             </div>
           </div>
 
-          {/* منطقة استعراض الرسائل - مريحة جداً للعين وتدعم الـ Light & Dark Modes */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-muted/5">
             {messages.map((msg, i) => (
-              <div 
-                key={i} 
+              <div
+                key={i}
                 className={`flex items-start gap-2 max-w-[85%] ${
-                  msg.role === "user" 
-                    ? (isArabic ? "mr-auto flex-row-reverse" : "ml-auto flex-row-reverse") 
+                  msg.role === "user"
+                    ? (isArabic ? "mr-auto flex-row-reverse" : "ml-auto flex-row-reverse")
                     : ""
                 }`}
               >
-                {/* الأيقونة تظهر بجانب رسائل المساعد فقط */}
                 {msg.role !== "user" && (
                   <div className="w-6 h-6 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shrink-0 mt-0.5">
                     <RobotIcon className="w-3 h-3" />
                   </div>
                 )}
-                <div 
+                <div
                   className={`text-xs px-3.5 py-2.5 shadow-sm leading-relaxed ${
                     msg.role === "user"
                       ? "bg-primary text-primary-foreground rounded-2xl rounded-tr-none"
@@ -184,8 +208,7 @@ Strict Rules to Follow:
                 </div>
               </div>
             ))}
-            
-            {/* مؤشر جاري الكتابة المتناسق بصرياً مع الموقع */}
+
             {loading && (
               <div className="flex items-center gap-2 text-muted-foreground text-[11px] px-2">
                 <span className="flex gap-1">
@@ -199,7 +222,6 @@ Strict Rules to Follow:
             <div ref={messagesEndRef} />
           </div>
 
-          {/* الحقل السفلي لإرسال الرسائل */}
           <div className="p-3 bg-card border-t border-border/60 flex items-center gap-2">
             <input
               type="text"
