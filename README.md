@@ -236,8 +236,6 @@ The app will be available at `http://localhost:5173`
 ### Tahseeli (Achievement Test)
 | Sub-category | Description |
 |---|---|
-| Mathematics | High school mathematics |
-| Physics | High school physics |
 | Chemistry | High school chemistry |
 | Biology | High school biology |
 
