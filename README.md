@@ -1,189 +1,338 @@
 # Quizora 
 
-Quizora is an AI-powered adaptive learning platform designed to help students prepare for Saudi standardized exams and professional certifications through personalized practice questions and intelligent difficulty adjustment.
+Quizora is an AI-powered adaptive learning platform designed to help students prepare for Saudi standardized exams and professional certifications through personalized practice questions and intelligent difficulty adjustment using Bayesian Knowledge Tracing (BKT).
 
 The platform focuses on:
-- Qudurat (General Aptitude Test)
-- Tahseeli (Achievement Test)
-- Professional Certifications (CCNA, Security+, AWS, PMP)
+- **Qudurat** — General Aptitude Test (Verbal & Quantitative)
+- **Tahseeli** — Achievement Test (Mathematics, Physics, Chemistry, Biology)
+- **Professional Certifications** — CCNA, CompTIA Security+, AWS Cloud Practitioner, PMP
 
 ---
 
-# Features
+## Features
 
-## Adaptive Learning Engine
-Quizora uses an adaptive engine based on BKT (Bayesian Knowledge Tracing) to:
-- Track user mastery levels
-- Analyze correct/incorrect answers
-- Adjust question difficulty dynamically
-- Personalize learning sessions
+### Adaptive Learning Engine (BKT)
+Quizora uses Bayesian Knowledge Tracing to:
+- Track user mastery levels per skill
+- Analyze correct/incorrect answers after every response
+- Adjust question difficulty dynamically (Easy → Medium → Hard)
+- Personalize each learning session based on accumulated performance
 
----
+### AI Question Generation
+The system integrates with OpenAI GPT-4o-mini to:
+- Generate multiple-choice questions in Arabic and English
+- Create detailed educational explanations per question
+- Produce questions across three difficulty levels
+- Avoid duplicate questions using a 50-question threshold per course
 
-## AI Question Generation
-The system integrates with OpenAI to:
-- Generate new Arabic multiple-choice questions
-- Create educational explanations
-- Produce questions with different difficulty levels
-- Avoid duplicate questions
+### AI Chatbot Assistant
+- Real-time conversational support during learning sessions
+- Supports both Arabic and English
+- Powered by OpenAI GPT-4o-mini via Supabase Edge Functions
 
----
-
-## Supported Categories
-
-### Qudurat
-- Verbal Section
-- Quantitative Section
-
-### Tahseeli
-- Mathematics
-- Physics
-- Chemistry
-- Biology
-
-### Professional Certifications
-- CCNA
-- CompTIA Security+
-- AWS Cloud Practitioner
-- PMP
+### Performance Analytics
+- Detailed reports per course and skill
+- Visual progress charts
+- Strength and weakness identification
 
 ---
 
-# Tech Stack
+## Tech Stack
 
-## Frontend
-- React
+### Frontend
+- React 18
 - TypeScript
-- TailwindCSS
+- Tailwind CSS + shadcn/ui (Radix UI)
 - Vite
 
-## Backend
-- Supabase
-- Supabase Edge Functions
-- PostgreSQL
+### Backend
+- Supabase (PostgreSQL + Auth + Edge Functions)
+- Deno runtime for Edge Functions
+- JWT-based authentication with Google OAuth support
 
-## AI Integration
-- OpenAI API (GPT-4o-mini)
+### AI Integration
+- OpenAI API — GPT-4o-mini
 
----
-
-# Main System Components
-
-## Adaptive Engine
-Responsible for:
-- Starting learning sessions
-- Selecting next questions
-- Updating mastery levels
-- Ending sessions
-
-## AI Question Generator
-Responsible for:
-- Generating new questions
-- Creating explanations
-- Producing difficulty-based content
+### Deployment
+- Frontend: Vercel
+- Backend: Supabase Cloud
 
 ---
 
-# Adaptive Difficulty Logic
+## Project Structure
 
-Difficulty is selected using mastery levels:
-
-- Easy → Beginner mastery
-- Medium → Intermediate mastery
-- Hard → Advanced mastery
-
-The system updates mastery after every answer using BKT formulas.
-
----
-
-# Project Structure
-
-```bash
-Quizora/
+```
+QUIZORA-main/
+│
+├── public/                        # Static assets (logo, robots.txt)
 │
 ├── src/
+│   ├── App.tsx                    # Root component and route definitions
+│   ├── main.tsx                   # App entry point
+│   │
+│   ├── components/                # All UI pages and components
+│   │   ├── LandingPage.tsx        # Public landing/home page
+│   │   ├── AuthPage.tsx           # Login and registration
+│   │   ├── ResetPasswordPage.tsx  # Password reset flow
+│   │   ├── Dashboard.tsx          # User dashboard with stats
+│   │   ├── CoursesPage.tsx        # Browse available courses
+│   │   ├── CourseDetailPage.tsx   # Course detail and skill breakdown
+│   │   ├── QuestionsPage.tsx      # Active quiz/question session
+│   │   ├── EvaluationPage.tsx     # Post-quiz evaluation and feedback
+│   │   ├── ContinueLearningPage.tsx # Resume previous sessions
+│   │   ├── ReportsPage.tsx        # Performance reports and analytics
+│   │   ├── ProfilePage.tsx        # User profile management
+│   │   ├── SettingsPage.tsx       # App settings (language, theme)
+│   │   ├── ChatBot.tsx            # Floating AI chatbot widget
+│   │   ├── ProtectedRoute.tsx     # Auth guard for protected routes
+│   │   │
+│   │   ├── layout/
+│   │   │   ├── AppLayout.tsx      # Main authenticated layout wrapper
+│   │   │   ├── AppSidebar.tsx     # Navigation sidebar
+│   │   │   └── AppTopbar.tsx      # Top navigation bar
+│   │   │
+│   │   └── ui/                    # shadcn/ui reusable components
+│   │       └── (button, card, dialog, table, chart, ...)
+│   │
 │   ├── pages/
-│   ├── components/
+│   │   ├── Index.tsx              # Root page redirect
+│   │   └── NotFound.tsx           # 404 page
+│   │
+│   ├── contexts/
+│   │   ├── AuthContext.tsx        # Global auth state (user session)
+│   │   └── LanguageContext.tsx    # Arabic/English language toggle
+│   │
+│   ├── hooks/
+│   │   ├── useUserStats.ts        # Hook for fetching user stats
+│   │   ├── use-toast.ts           # Toast notification hook
+│   │   └── use-mobile.tsx         # Responsive breakpoint hook
+│   │
 │   ├── services/
+│   │   └── adaptiveEngine.ts      # Client-side calls to adaptive-engine Edge Function
+│   │
 │   └── integrations/
+│       └── supabase/
+│           ├── client.ts          # Supabase client initialization
+│           └── types.ts           # Auto-generated database types
 │
 ├── supabase/
-│   └── functions/
-│       ├── adaptive-engine/
-│       ├── generate-questions/
-│       └── generate-explanation/
+│   ├── config.toml                # Supabase project configuration
+│   │
+│   ├── functions/
+│   │   ├── adaptive-engine/       # Main BKT engine: start session, submit answer,
+│   │   │   └── index.ts           #   next question, end session, AI question generation
+│   │   ├── generate-questions/    # On-demand question generation for a specific skill
+│   │   │   └── index.ts
+│   │   ├── generate-explanation/  # Generate or regenerate AI explanation for a question
+│   │   │   └── index.ts
+│   │   └── review-questions/      # Batch AI review and difficulty correction of questions
+│   │       └── index.ts
+│   │
+│   └── migrations/
+│       ├── ..._seed_initial_data.sql   # Database schema and initial seed data
+│       └── ...                         # Additional migrations
 │
-└── README.md
+├── .env                           # Environment variables (not committed)
+├── package.json
+├── vite.config.ts
+├── tailwind.config.ts
+└── tsconfig.json
 ```
 
 ---
 
-# Environment Variables
+## Prerequisites
 
-Create a `.env` file:
+Before running the project, make sure you have:
+
+- **Node.js** v18 or higher
+- **npm** v9 or higher
+- A **Supabase** project — [supabase.com](https://supabase.com)
+- An **OpenAI API key** — [platform.openai.com](https://platform.openai.com)
+- **Supabase CLI** (for deploying Edge Functions) — install via:
+  ```bash
+  npm install -g supabase
+  ```
+
+---
+
+## Environment Variables
+
+Create a `.env` file in the project root:
 
 ```env
-VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 OPENAI_API_KEY=your_openai_api_key
 ```
 
+> **Note:** `OPENAI_API_KEY` is used inside Supabase Edge Functions, not the frontend. Set it as a Supabase secret (see Deployment section).
+
 ---
 
-# Running The Project
+## Running Locally
 
-Install dependencies:
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/SajaALfahmi/QUIZORA.git
+cd QUIZORA
+```
+
+### 2. Install dependencies
 
 ```bash
 npm install
 ```
 
-Run locally:
+### 3. Set up environment variables
 
 ```bash
-npm run dev
+cp .env.example .env
+# Then fill in your Supabase URL and anon key
 ```
 
-Deploy Supabase functions:
+### 4. Apply database migrations
+
+```bash
+supabase login
+supabase link --project-ref your_project_ref
+supabase db push
+```
+
+### 5. Deploy Edge Functions
 
 ```bash
 supabase functions deploy adaptive-engine
 supabase functions deploy generate-questions
 supabase functions deploy generate-explanation
+supabase functions deploy review-questions
 ```
 
+### 6. Set Edge Function secrets
+
+```bash
+supabase secrets set OPENAI_API_KEY=your_openai_api_key
+```
+
+### 7. Run the development server
+
+```bash
+npm run dev
+```
+
+The app will be available at `http://localhost:5173`
+
 ---
 
-# Deployment
+## Supported Courses
 
-## Frontend
-- Vercel
+### Qudurat (General Aptitude Test)
+| Sub-category | Description |
+|---|---|
+| Verbal | Verbal reasoning questions |
+| Quantitative | Quantitative/numerical reasoning |
 
-## Backend
-- Supabase Edge Functions
+### Tahseeli (Achievement Test)
+| Sub-category | Description |
+|---|---|
+| Mathematics | High school mathematics |
+| Physics | High school physics |
+| Chemistry | High school chemistry |
+| Biology | High school biology |
+
+### Professional Certifications
+| Certification | Description |
+|---|---|
+| CCNA | Cisco Certified Network Associate |
+| CompTIA Security+ | Cybersecurity fundamentals |
+| AWS Cloud Practitioner | AWS cloud concepts |
+| PMP | Project Management Professional |
 
 ---
 
-# Team Project
+## Adaptive Difficulty Logic (BKT)
 
-Saja AlFahmi
+Difficulty is selected based on the user's mastery level, updated after every answer:
+
+| Mastery Level | Assigned Difficulty |
+|---|---|
+| ≥ 0.7 | Hard |
+| 0.4 – 0.69 | Medium |
+| < 0.4 | Easy |
+
+**BKT Parameters used:**
+
+| Parameter | Value | Description |
+|---|---|---|
+| P_L0 | 0.3 | Initial knowledge probability |
+| P_T | 0.15 | Learning transition probability |
+| P_G | 0.2 | Guess probability |
+| P_S | 0.1 | Slip probability |
+
+New questions are AI-generated automatically when the question pool for a course **falls below 50 questions**, with 25 questions generated per difficulty level.
+
+---
+
+## Deployment
+
+### Frontend (Vercel)
+
+1. Push your code to GitHub
+2. Connect the repository to [Vercel](https://vercel.com)
+3. Add the environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) in Vercel project settings
+4. Deploy
+
+### Backend (Supabase)
+
+Edge Functions are deployed via the Supabase CLI:
+
+```bash
+supabase functions deploy adaptive-engine
+supabase functions deploy generate-questions
+supabase functions deploy generate-explanation
+supabase functions deploy review-questions
+```
+
+Set the OpenAI secret:
+```bash
+supabase secrets set OPENAI_API_KEY=your_openai_api_key
+```
+
+### Live Demo
+
+ [https://quizora-five.vercel.app](https://quizora-five.vercel.app)
+
+---
+
+## Team
+
+Name 
+
+Saja AlFahmi 
 Arwa AlRoqi
-Ritaj Alharthi
-Lana Alamir
+Ritaj Alharthi  
+Lana Alamir  
+
+**Project Advisor:** Mohammed Ikram  
+**University:** Umm Al-Qura University — Jamoum University College  
+**Department:** Computer Science  
+**Academic Year:** 2025/2026
 
 ---
 
-# Future Improvements
+## Future Improvements
 
-- Smarter AI-generated questions
-- Better Qudurat-style datasets
-- Performance analytics dashboard
-- Voice support for accessibility
+- Dynamic course expansion by administrators (without code changes)
+- Smarter AI cost management via caching and batch scheduling
+- Mobile application (Android & iOS) with offline support
+- Advanced predictive analytics dashboard
+- Multimedia learning materials (videos, diagrams)
+- Expanded multilingual and accessibility support
 - Gamification system
-- Arabic NLP improvements
 
 ---
 
-# License
+## License
 
-This project is for educational purposes only.
+This project is developed for educational and academic purposes only (Graduation Project - 2025-2020).
