@@ -333,4 +333,4 @@ Name
 
 ## License
 
-This project is developed for educational and academic purposes only (Graduation Project - 2025-2020).
+This project is developed for educational and academic purposes only (Graduation Project - 2025-2026).
