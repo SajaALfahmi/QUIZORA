@@ -4,7 +4,7 @@ Quizora is an AI-powered adaptive learning platform designed to help students pr
 
 The platform focuses on:
 - **Qudurat** — General Aptitude Test (Verbal & Quantitative)
-- **Tahseeli** — Achievement Test (Mathematics, Physics, Chemistry, Biology)
+- **Tahseeli** — Achievement Test (Chemistry, Biology)
 - **Professional Certifications** — CCNA, CompTIA Security+, AWS Cloud Practitioner, PMP
 
 ---
