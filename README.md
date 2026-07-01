@@ -307,12 +307,12 @@ supabase secrets set OPENAI_API_KEY=your_openai_api_key
 
 Name 
 
--**Saja AlFahmi**-
--**Arwa AlRoqi**-
+-**Saja Alfahmi**-
+-**Arwa Alroqi**-
 -**Ritaj Alharthi**- 
 -**Lana Alamir**-
 
-**Project Advisor:** Mohammed Ikram  
+**Project Advisor:** Dr.Mohammed Ikram  
 **University:** Umm Al-Qura University — Jamoum University College  
 **Department:** Computer Science  
 **Academic Year:** 2025/2026
