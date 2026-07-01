@@ -1,4 +1,4 @@
-# Quizora 
+# QUIZORA
 
 Quizora is an AI-powered adaptive learning platform designed to help students prepare for Saudi standardized exams and professional certifications through personalized practice questions and intelligent difficulty adjustment using Bayesian Knowledge Tracing (BKT).
 
