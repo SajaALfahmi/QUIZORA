@@ -177,9 +177,17 @@ async function handleSubmitAnswer(supabaseService: any, userId: string, payload:
     .from("answer_options")
     .select("is_correct")
     .eq("id", selected_option_id)
-    .single();
+    .eq("question_id", question_id)
+    .maybeSingle();
 
-  const isCorrect = option?.is_correct ?? false;
+  if (!option) {
+    return new Response(
+      JSON.stringify({ error: "selected_option_id does not belong to question_id" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+
+  const isCorrect = option.is_correct;
 
   await supabaseService.from("user_answers").insert({
     user_id: userId,
