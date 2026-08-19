@@ -199,9 +199,17 @@ async function handleSubmitAnswer(supabaseService: any, userId: string, payload:
     console.log(`BKT: ${currentMastery.toFixed(3)} → ${newMastery.toFixed(3)} (correct: ${isCorrect})`);
   }
 
-  return new Response(JSON.stringify({ success: true, is_correct: isCorrect }), {
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
-  });
+  const { data: correctOption } = await supabaseService
+    .from("answer_options")
+    .select("id")
+    .eq("question_id", question_id)
+    .eq("is_correct", true)
+    .maybeSingle();
+
+  return new Response(
+    JSON.stringify({ success: true, is_correct: isCorrect, correct_option_id: correctOption?.id ?? null }),
+    { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+  );
 }
 
 async function handleNextQuestion(supabaseService: any, userId: string, sessionId: string, requestedLanguage: string = "en") {
@@ -289,8 +297,19 @@ async function handleNextQuestion(supabaseService: any, userId: string, sessionI
     nextQuestion = await translateQuestion(nextQuestion, requestedLanguage);
   }
 
+  // Do not expose is_correct / explanation to the client before the user answers.
+  const sanitizedQuestion = {
+    ...nextQuestion,
+    explanation: null,
+    answer_options: (nextQuestion.answer_options || []).map((opt: any) => ({
+      id: opt.id,
+      content: opt.content,
+      order_index: opt.order_index,
+    })),
+  };
+
   return new Response(
-    JSON.stringify({ question: nextQuestion, finished: false, difficulty_target: targetDifficulty }),
+    JSON.stringify({ question: sanitizedQuestion, finished: false, difficulty_target: targetDifficulty }),
     { headers: { ...corsHeaders, "Content-Type": "application/json" } }
   );
 }

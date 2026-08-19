@@ -105,12 +105,7 @@ Strict Rules:
 4. Keep responses concise, direct, and professional.`;
 
     try {
-      const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`,
-        },
+      const { data, error } = await supabase.functions.invoke("chatbot", {
         body: JSON.stringify({
           model: "gpt-4o-mini",
           messages: [
@@ -120,7 +115,7 @@ Strict Rules:
           ],
         }),
       });
-      const data = await response.json();
+      if (error) throw error;
       const assistantContent = data.choices[0].message.content;
       setMessages(prev => [...prev, { role: "assistant", content: assistantContent }]);
 

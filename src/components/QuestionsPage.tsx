@@ -343,7 +343,7 @@ const QuestionsPage = () => {
     setLoadingExplanation(true);
     try {
       const selectedOpt = currentQuestion.answer_options.find((o) => o.id === selectedAnswer);
-      const correctOpt = currentQuestion.answer_options.find((o) => o.is_correct);
+      const correctOpt = currentQuestion.answer_options.find((o) => o.id === lastResult?.correct_option_id);
       const result = await aiService.generateExplanation({
         question_id: currentQuestion.id,
         user_answer: selectedOpt?.content,
@@ -659,10 +659,11 @@ const QuestionsPage = () => {
                   {currentQuestion.answer_options
                     .sort((a, b) => a.order_index - b.order_index)
                     .map((opt) => {
+                      const isCorrectOption = opt.id === lastResult?.correct_option_id;
                       let optionStyle = "bg-muted/20 border-border/30 hover:bg-muted/40 hover:border-violet-500/30";
                       if (showResult) {
-                        if (opt.is_correct) optionStyle = "bg-emerald-500/15 border-emerald-500/50";
-                        else if (opt.id === selectedAnswer && !opt.is_correct) optionStyle = "bg-rose-500/15 border-rose-500/50";
+                        if (isCorrectOption) optionStyle = "bg-emerald-500/15 border-emerald-500/50";
+                        else if (opt.id === selectedAnswer && !isCorrectOption) optionStyle = "bg-rose-500/15 border-rose-500/50";
                         else optionStyle = "bg-muted/10 border-border/20 opacity-50";
                       } else if (selectedAnswer === opt.id) {
                         optionStyle = "bg-violet-500/15 border-violet-500/50 shadow-sm";
@@ -677,7 +678,7 @@ const QuestionsPage = () => {
                           <Label htmlFor={opt.id} className="flex-1 cursor-pointer text-foreground" dir="auto">
                             {opt.content}
                           </Label>
-                          {showResult && opt.is_correct && <Check className="w-5 h-5 text-emerald-400" />}
+                          {showResult && isCorrectOption && <Check className="w-5 h-5 text-emerald-400" />}
                         </div>
                       );
                     })}
