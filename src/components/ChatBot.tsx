@@ -116,6 +116,7 @@ Strict Rules:
         }),
       });
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
       const assistantContent = data.choices[0].message.content;
       setMessages(prev => [...prev, { role: "assistant", content: assistantContent }]);
 
@@ -135,6 +136,12 @@ Strict Rules:
 
     } catch (error) {
       console.error("Error connecting to OpenAI:", error);
+      setMessages(prev => [...prev, {
+        role: "assistant",
+        content: isArabic
+          ? "عذراً، حدث خطأ أثناء التواصل مع المساعد. حاول مرة أخرى."
+          : "Sorry, something went wrong connecting to the assistant. Please try again."
+      }]);
     } finally {
       setLoading(false);
     }

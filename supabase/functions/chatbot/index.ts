@@ -12,8 +12,9 @@ Deno.serve(async (req: Request) => {
   try {
     const apiKey = Deno.env.get("OPENAI_API_KEY");
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: "OpenAI API key not configured" }), {
-        status: 500,
+      console.error("Chatbot function error: OPENAI_API_KEY is not set");
+      return new Response(JSON.stringify({ error: "Chatbot is not configured. Please contact support." }), {
+        status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -29,15 +30,25 @@ Deno.serve(async (req: Request) => {
       body: JSON.stringify(body),
     });
 
+    if (!aiResponse.ok) {
+      const errText = await aiResponse.text();
+      console.error("OpenAI request failed:", aiResponse.status, errText);
+      return new Response(JSON.stringify({ error: "The assistant is temporarily unavailable. Please try again shortly." }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     const data = await aiResponse.json();
 
     return new Response(JSON.stringify(data), {
-      status: aiResponse.status,
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error?.message || String(error) }), {
-      status: 500,
+    console.error("Chatbot function error:", error?.message || String(error));
+    return new Response(JSON.stringify({ error: "Something went wrong. Please try again." }), {
+      status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }
