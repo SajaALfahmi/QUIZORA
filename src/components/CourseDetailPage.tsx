@@ -9,6 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { getLocalizedCourseName } from "@/lib/contentLocalization";
 import logo from "@/assets/logo.png";
 
 interface Review {
@@ -168,7 +169,7 @@ const CourseDetailPage = () => {
               <div className="p-4 rounded-2xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/20">
                 <BookOpen className="w-10 h-10 text-foreground" />
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">{course.title}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">{getLocalizedCourseName({ id, title: course.title }, t)}</h1>
             </div>
             <p className="text-muted-foreground leading-relaxed mb-6">{course.description}</p>
             <Button

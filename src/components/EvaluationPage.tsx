@@ -13,6 +13,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserStats } from "@/hooks/useUserStats";
 import { RadialBarChart, RadialBar, ResponsiveContainer } from "recharts";
+import { getLocalizedCourseName, getLocalizedSkillName } from "@/lib/contentLocalization";
 
 interface CourseScore {
   courseId:   string;
@@ -113,7 +114,7 @@ const EvaluationPage = () => {
               : data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
             return {
               courseId:   cid,
-              courseName: courses?.find((c) => c.id === cid)?.title ?? cid,
+              courseName: getLocalizedCourseName({ id: cid, title: courses?.find((c) => c.id === cid)?.title }, t),
               score: bktScore, correct: data.correct, total: data.total, sessions: data.sessions,
             };
           });
@@ -152,7 +153,7 @@ const EvaluationPage = () => {
             inProgressList.push({
               sessionId:  s.id,
               courseId:   s.course_id,
-              courseName: activeCourses?.find((c) => c.id === s.course_id)?.title ?? s.course_id,
+              courseName: getLocalizedCourseName({ id: s.course_id, title: activeCourses?.find((c) => c.id === s.course_id)?.title }, t),
               answeredQ:  answered,
               totalQ:     total,
               startedAt:  s.started_at,
@@ -220,7 +221,7 @@ const EvaluationPage = () => {
 
   // حسابات واجهة النتيجة الفورية الحالية (Post-Exam)
   const overallScore = stats.averageScore;
-  const skillScores = stats.skillLevels.map((s) => ({ name: s.skill_name, score: Math.round(s.mastery_level * 100) }));
+  const skillScores = stats.skillLevels.map((s) => ({ name: getLocalizedSkillName(s.skill_name, t), score: Math.round(s.mastery_level * 100) }));
   const { timeSpentSeconds = 0 } = stateData;
   const timeMinutes = Math.floor(timeSpentSeconds / 60);
   const timeSeconds = timeSpentSeconds % 60;

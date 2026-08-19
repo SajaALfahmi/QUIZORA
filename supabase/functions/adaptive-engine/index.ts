@@ -36,6 +36,31 @@ function masteryToDifficulty(mastery: number): string {
   return "easy";
 }
 
+// Single, explicit place where an invalid/missing language value is resolved.
+// Any fallback here is logged, never silent, so a dropped/omitted language
+// argument upstream is visible instead of quietly behaving like "en".
+function normalizeLanguage(value: unknown): "ar" | "en" {
+  if (value === "ar" || value === "en") return value;
+  console.warn(`adaptive-engine: unexpected language value "${value}" - falling back to "en"`);
+  return "en";
+}
+
+// Short subject labels used to build a language-correct auto-generated
+// skill name. Kept in sync with the "skill.*" translation keys in
+// src/contexts/LanguageContext.tsx so frontend lookups continue to match.
+const SUBJECT_LABELS: Record<string, { ar: string; en: string }> = {
+  verbal: { ar: "اللفظي", en: "Verbal" },
+  quantitative: { ar: "الكمي", en: "Quantitative" },
+  mathematics: { ar: "الرياضيات", en: "Mathematics" },
+  physics: { ar: "الفيزياء", en: "Physics" },
+  chemistry: { ar: "الكيمياء", en: "Chemistry" },
+  biology: { ar: "الأحياء", en: "Biology" },
+  ccna: { ar: "الشبكات", en: "Network" },
+  security: { ar: "الأمن السيبراني", en: "Security" },
+  aws: { ar: "الحوسبة السحابية", en: "Cloud" },
+  pmp: { ar: "إدارة المشاريع", en: "Project Management" },
+};
+
 interface SubmitAnswerPayload {
   session_id: string;
   question_id: string;
@@ -116,7 +141,7 @@ Deno.serve(async (req: Request) => {
 
 async function handleStartSession(supabaseService: any, userId: string, payload: StartSessionPayload) {
   const { course_id, total_questions, difficulty_mode, language } = payload;
-  const sessionLanguage = language === "ar" ? "ar" : "en";
+  const sessionLanguage = normalizeLanguage(language);
 
   await ensureCourseExists(supabaseService, course_id, sessionLanguage);
 
@@ -220,7 +245,7 @@ async function handleNextQuestion(supabaseService: any, userId: string, sessionI
     });
   }
 
-  requestedLanguage = requestedLanguage === "ar" ? "ar" : "en";
+  requestedLanguage = normalizeLanguage(requestedLanguage);
 
   const { data: session, error: sessionError } = await supabaseService
     .from("learning_sessions")
@@ -335,7 +360,7 @@ async function handleEndSession(supabaseService: any, userId: string, sessionId:
   });
 }
 
-async function ensureCourseExists(supabaseService: any, courseId: string, language: string = "ar") {
+async function ensureCourseExists(supabaseService: any, courseId: string, language: "ar" | "en") {
   const { data: existingCourse } = await supabaseService
     .from("courses")
     .select("id, sub_category")
@@ -371,9 +396,14 @@ async function ensureCourseExists(supabaseService: any, courseId: string, langua
   let skillId = existingSkill?.id;
 
   if (!skillId) {
+    const label = SUBJECT_LABELS[subCategory]?.[language] ?? subCategory;
+    const skillName = subCategory === "pmp"
+      ? label
+      : language === "ar" ? `أساسيات ${label}` : `${label} Fundamentals`;
+    const skillDescription = language === "ar" ? `مفاهيم أساسية في ${label}` : `Basic concepts in ${label}`;
     const { data: skill } = await supabaseService
       .from("skills")
-      .insert({ course_id: courseId, name: `${subCategory} Fundamentals`, description: `Basic concepts in ${subCategory}`, order_index: 0 })
+      .insert({ course_id: courseId, name: skillName, description: skillDescription, order_index: 0 })
       .select().single();
     skillId = skill?.id;
   }
@@ -386,7 +416,7 @@ async function ensureCourseExists(supabaseService: any, courseId: string, langua
   }
 }
 
-async function generateAIQuestions(supabaseService: any, courseId: string, skillId: string, subCategory: string, language: string = "ar") {
+async function generateAIQuestions(supabaseService: any, courseId: string, skillId: string, subCategory: string, language: "ar" | "en") {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
   if (!apiKey) return;
 

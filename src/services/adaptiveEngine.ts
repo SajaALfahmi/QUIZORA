@@ -7,7 +7,7 @@ function throwFunctionError(error: any): never {
 }
 
 export const adaptiveEngine = {
-  startSession: async (courseId: string, totalQuestions: number, difficultyMode: string = "auto", language: string = "en") => {
+  startSession: async (courseId: string, totalQuestions: number, difficultyMode: string = "auto", language: "ar" | "en") => {
     const { data: { session } } = await supabase.auth.getSession();
     const { data, error } = await supabase.functions.invoke("adaptive-engine", {
       body: JSON.stringify({ course_id: courseId, total_questions: totalQuestions, difficulty_mode: difficultyMode, language }),
@@ -27,7 +27,7 @@ export const adaptiveEngine = {
     return data;
   },
 
-  getNextQuestion: async (sessionId: string, difficultyMode: string = "auto", language: string = "en") => {
+  getNextQuestion: async (sessionId: string, difficultyMode: string = "auto", language: "ar" | "en") => {
     const { data: { session } } = await supabase.auth.getSession();
     const { data, error } = await supabase.functions.invoke("adaptive-engine", {
       body: JSON.stringify({ session_id: sessionId, difficulty_mode: difficultyMode, language }),
@@ -49,7 +49,7 @@ export const adaptiveEngine = {
 };
 
 export const aiService = {
-  generateExplanation: async (payload: { question_id: string; user_answer?: string; correct_answer?: string }) => {
+  generateExplanation: async (payload: { question_id: string; user_answer?: string; correct_answer?: string; language: "ar" | "en" }) => {
     const { data: { session } } = await supabase.auth.getSession();
     const { data, error } = await supabase.functions.invoke("generate-explanation", {
       body: JSON.stringify(payload),

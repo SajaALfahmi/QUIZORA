@@ -11,25 +11,10 @@ import AppLayout from "./layout/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
+import { getLocalizedCourseName } from "@/lib/contentLocalization";
 
 type Category = "qudurat" | "tahseeli" | "certifications";
 type TahseeliTrack = "scientific" | "literary" | null;
-
-const courseTranslationMap: Record<string, { title: string; desc: string }> = {
-  "Qudurat - Verbal": { title: "course.qudurat_verbal", desc: "course.qudurat_verbal_desc" },
-  "Qudurat - Quantitative": { title: "course.qudurat_quantitative", desc: "course.qudurat_quantitative_desc" },
-  "Tahseeli - Mathematics": { title: "course.tahseeli_math", desc: "course.tahseeli_math_desc" },
-  "Tahseeli - Physics": { title: "course.tahseeli_physics", desc: "course.tahseeli_physics_desc" },
-  "Tahseeli - Chemistry": { title: "course.tahseeli_chemistry", desc: "course.tahseeli_chemistry_desc" },
-  "Tahseeli - Biology": { title: "course.tahseeli_biology", desc: "course.tahseeli_biology_desc" },
-  "Tahseeli - Geography": { title: "course.tahseeli_geography", desc: "course.tahseeli_geography_desc" },
-  "Tahseeli - Arabic Language": { title: "course.tahseeli_arabic", desc: "course.tahseeli_arabic_desc" },
-  "Tahseeli - Islamic Studies": { title: "course.tahseeli_islamic", desc: "course.tahseeli_islamic_desc" },
-  "CCNA": { title: "course.ccna", desc: "course.ccna_desc" },
-  "CompTIA Security+": { title: "course.security_plus", desc: "course.security_plus_desc" },
-  "AWS Cloud Practitioner": { title: "course.aws_ccp", desc: "course.aws_ccp_desc" },
-  "PMP": { title: "course.pmp", desc: "course.pmp_desc" },
-};
 
 const courseMeta: Record<string, {
   icon: React.ComponentType<{ className?: string }>;
@@ -236,12 +221,11 @@ const CoursesPage = () => {
     if (!selectedCourseId) return;
     const course = courses.find((c) => c.id === selectedCourseId);
     if (course?.isFutureWork) return;
-    const mapped = course ? courseTranslationMap[course.title] : null;
     navigate("/questions", {
       state: {
         courseId: selectedCourseId,
-        courseName: mapped ? t(mapped.title) : course?.title,
-        courseDescription: mapped ? t(mapped.desc) : course?.description,
+        courseName: course ? getLocalizedCourseName(course, t) : undefined,
+        courseDescription: course?.description,
         coursePayload: course,
       },
     });
@@ -412,9 +396,8 @@ const CoursesPage = () => {
               const meta = getCourseMeta(course);
               const Icon = meta?.icon ?? Award;
               const isSelected = selectedCourseId === course.id;
-              const mapped = courseTranslationMap[course.title];
-              const title = mapped ? t(mapped.title) : course.title;
-              const desc = mapped ? t(mapped.desc) : course.description;
+              const title = getLocalizedCourseName(course, t);
+              const desc = course.description;
 
               return (
                 <Card

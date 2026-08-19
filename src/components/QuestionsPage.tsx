@@ -13,6 +13,7 @@ import { adaptiveEngine, aiService } from "@/services/adaptiveEngine";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getLocalizedCourseName } from "@/lib/contentLocalization";
 import logo from "@/assets/logo.png";
 
 interface Question {
@@ -185,7 +186,7 @@ const QuestionsPage = () => {
           .maybeSingle();
 
         if (course) {
-          setCurrentCourseName(course.title);
+          setCurrentCourseName(getLocalizedCourseName({ id: session.course_id, title: course.title }, t));
           setCurrentCourseDescription(course.description ?? "");
         }
       } catch (error) {
@@ -223,7 +224,7 @@ const QuestionsPage = () => {
               .maybeSingle();
 
             if (course) {
-              setCurrentCourseName(course.title);
+              setCurrentCourseName(getLocalizedCourseName({ id: session.course_id, title: course.title }, t));
               setCurrentCourseDescription(course.description ?? "");
             }
           }
@@ -285,7 +286,7 @@ const QuestionsPage = () => {
         navigate("/courses");
         return;
       }
-      const result = await adaptiveEngine.startSession(currentCourseId, selectedCount, selectedDifficulty);
+      const result = await adaptiveEngine.startSession(currentCourseId, selectedCount, selectedDifficulty, language);
       setSessionId(result.session.id);
       await fetchNextQuestion(result.session.id, selectedDifficulty, language);
     } catch (error: any) {
@@ -301,7 +302,7 @@ const QuestionsPage = () => {
       setShowResult(false); setSelectedAnswer(""); setExplanation(null); setLastResult(null);
       if (questionNumber >= selectedCount) { setFinished(true); setIsLoading(false); return; }
 
-      const result = await adaptiveEngine.getNextQuestion(sid, diffMode || selectedDifficulty);
+      const result = await adaptiveEngine.getNextQuestion(sid, diffMode || selectedDifficulty, lang);
 
       if (result.finished) { setFinished(true); setIsLoading(false); return; }
       if (!result.question) throw new Error("No question returned from adaptive engine.");

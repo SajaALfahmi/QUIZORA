@@ -7,6 +7,7 @@ import AppLayout from "./layout/AppLayout";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { supabase } from "@/integrations/supabase/client";
+import { getLocalizedCourseName } from "@/lib/contentLocalization";
 
 interface ContinueCourse {
   sessionId: string;
@@ -91,7 +92,7 @@ const ContinueLearningPage = () => {
           return {
             sessionId: session.id,
             courseId: session.course_id,
-            courseTitle: course?.title ?? session.course_id,
+            courseTitle: getLocalizedCourseName({ id: session.course_id, title: course?.title }, t),
             courseDescription: course?.description ?? "",
             totalQuestions,
             completedQuestions,
