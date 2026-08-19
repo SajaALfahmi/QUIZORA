@@ -125,6 +125,19 @@ serve(async (req) => {
     }
 
     // =========================
+    // GET CORRECT ANSWER
+    // =========================
+
+    const { data: correctOption } = await supabase
+      .from("answer_options")
+      .select("content")
+      .eq("question_id", question_id)
+      .eq("is_correct", true)
+      .maybeSingle();
+
+    const correctAnswer = correctOption?.content ?? "";
+
+    // =========================
     // OPENAI REQUEST
     // =========================
 
@@ -159,7 +172,7 @@ Question:
 ${question.content}
 
 Correct Answer:
-${question.correct_answer}
+${correctAnswer}
 
 Generate a detailed explanation in ${language === "ar" ? "Arabic" : "English"}.
 `,
