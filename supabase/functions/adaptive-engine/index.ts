@@ -506,7 +506,10 @@ function needsTranslation(content: string, targetLang: string) {
 
 async function translateQuestion(question: any, targetLang: string) {
   const apiKey = Deno.env.get("OPENAI_API_KEY");
-  if (!apiKey) return question;
+  if (!apiKey) {
+    console.warn(`translateQuestion: OPENAI_API_KEY not configured - question ${question?.id} returned untranslated`);
+    return question;
+  }
 
   const languageName = targetLang === "ar" ? "Arabic" : "English";
   const sourceLanguage = targetLang === "ar" ? "English" : "Arabic";
@@ -517,56 +520,67 @@ async function translateQuestion(question: any, targetLang: string) {
 
   const prompt = `Translate the following multiple-choice question from ${sourceLanguage} to ${languageName}. Keep the meaning and answer correctness the same. Return JSON only with this shape:\n{\n  "content": "...",\n  "explanation": "...",\n  "options": [\n    { "id": "...", "content": "...", "is_correct": true, "order_index": 0 }\n  ]\n}\n\nQuestion:\n${question.content}\n\nExplanation:\n${question.explanation || ""}\n\nOptions:\n${optionsText}`;
 
-  const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: "You are a translator for quiz questions. Reply with valid JSON only.",
-        },
-        { role: "user", content: prompt },
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.2,
-    }),
-  });
+  try {
+    const aiResponse = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "You are a translator for quiz questions. Reply with valid JSON only.",
+          },
+          { role: "user", content: prompt },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.2,
+      }),
+    });
 
-  if (!aiResponse.ok) {
-    return question;
-  }
-
-  const aiData = await aiResponse.json();
-  const translated = aiData?.choices?.[0]?.message?.content;
-  if (!translated) return question;
-
-  let parsedResult: any = translated;
-  if (typeof translated === "string") {
-    try {
-      parsedResult = JSON.parse(translated);
-    } catch {
+    if (!aiResponse.ok) {
+      console.warn(`translateQuestion: OpenAI request failed with status ${aiResponse.status} for question ${question?.id} - returned untranslated`);
       return question;
     }
-  }
 
-  if (!parsedResult?.content || !Array.isArray(parsedResult.options)) {
+    const aiData = await aiResponse.json();
+    const translated = aiData?.choices?.[0]?.message?.content;
+    if (!translated) {
+      console.warn(`translateQuestion: empty/missing translated content for question ${question?.id} - returned untranslated`);
+      return question;
+    }
+
+    let parsedResult: any = translated;
+    if (typeof translated === "string") {
+      try {
+        parsedResult = JSON.parse(translated);
+      } catch {
+        console.warn(`translateQuestion: failed to parse AI response as JSON for question ${question?.id} - returned untranslated`);
+        return question;
+      }
+    }
+
+    if (!parsedResult?.content || !Array.isArray(parsedResult.options)) {
+      console.warn(`translateQuestion: AI response had unexpected/malformed structure for question ${question?.id} - returned untranslated`);
+      return question;
+    }
+
+    return {
+      ...question,
+      content: parsedResult.content,
+      explanation: parsedResult.explanation || question.explanation,
+      answer_options: (parsedResult.options || []).map((opt: any) => ({
+        id: opt.id || opt.id,
+        content: opt.content || "",
+        is_correct: opt.is_correct ?? false,
+        order_index: opt.order_index ?? 0,
+      })),
+    };
+  } catch (error: any) {
+    console.error(`translateQuestion: network/exception error for question ${question?.id} - ${error?.message || String(error)} - returned untranslated`);
     return question;
   }
-
-  return {
-    ...question,
-    content: parsedResult.content,
-    explanation: parsedResult.explanation || question.explanation,
-    answer_options: (parsedResult.options || []).map((opt: any) => ({
-      id: opt.id || opt.id,
-      content: opt.content || "",
-      is_correct: opt.is_correct ?? false,
-      order_index: opt.order_index ?? 0,
-    })),
-  };
 }
