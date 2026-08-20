@@ -264,7 +264,7 @@ const EvaluationPage = () => {
             <Badge className={`${getLabelColor(overallScore)} border-0 text-sm px-4 py-1 mb-3`}>{getLabel(overallScore)}</Badge>
             {timeSpentSeconds > 0 && (
               <p className="text-muted-foreground mt-2">
-                ⏱ {isAr ? "الوقت المستغرق" : "Time Spent"}: {timeMinutes}m {timeSeconds}s
+                {isAr ? "الوقت المستغرق" : "Time Spent"}: {timeMinutes}m {timeSeconds}s
               </p>
             )}
             <p className="text-muted-foreground">{stats.totalCorrect} {t("eval.correctOutOf")} {stats.totalQuestions} {t("eval.questionsWord")}</p>

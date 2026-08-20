@@ -47,6 +47,40 @@ const COURSE_TITLE_TO_KEY: Record<string, string> = {
   "PMP": "course.pmp",
 };
 
+// Same id/title -> key mapping as above, but pointing at each course's
+// "_desc" translation key instead of its name key.
+const COURSE_ID_TO_DESC_KEY: Record<string, string> = {
+  "455159fc-0c91-445e-a3b3-650d0727f1f7": "course.qudurat_verbal_desc",
+  "954b6d5f-6cff-4aa4-b732-8f68b4e4fc1f": "course.qudurat_quantitative_desc",
+  "9127a8c4-1d22-4d29-a5e9-3530ded07534": "course.tahseeli_math_desc",
+  "c8dc4f5e-6f6e-4ae1-8a9f-b19c2c5269cf": "course.tahseeli_physics_desc",
+  "7a41b06d-6d9e-4c16-bbde-5d6d13b5e0a9": "course.tahseeli_chemistry_desc",
+  "f8f8a675-09ea-4179-b4f8-b32a2b232fbc": "course.tahseeli_biology_desc",
+  "a1b2c3d4-0001-0001-0001-000000000001": "course.tahseeli_geography_desc",
+  "a1b2c3d4-0002-0002-0002-000000000002": "course.tahseeli_arabic_desc",
+  "a1b2c3d4-0003-0003-0003-000000000003": "course.tahseeli_islamic_desc",
+  "48f5aa9f-8a6e-42f7-bf15-2d8bdd7c3864": "course.ccna_desc",
+  "84c82536-ff63-4663-9fa4-7f3818f48e1b": "course.security_plus_desc",
+  "28ce9f52-455c-431d-9e5a-caa107a97fa5": "course.aws_ccp_desc",
+  "304a9f8b-a018-4d8e-a0ff-9889e4b4b635": "course.pmp_desc",
+};
+
+const COURSE_TITLE_TO_DESC_KEY: Record<string, string> = {
+  "Qudurat - Verbal": "course.qudurat_verbal_desc",
+  "Qudurat - Quantitative": "course.qudurat_quantitative_desc",
+  "Tahseeli - Mathematics": "course.tahseeli_math_desc",
+  "Tahseeli - Physics": "course.tahseeli_physics_desc",
+  "Tahseeli - Chemistry": "course.tahseeli_chemistry_desc",
+  "Tahseeli - Biology": "course.tahseeli_biology_desc",
+  "Tahseeli - Geography": "course.tahseeli_geography_desc",
+  "Tahseeli - Arabic Language": "course.tahseeli_arabic_desc",
+  "Tahseeli - Islamic Studies": "course.tahseeli_islamic_desc",
+  "CCNA": "course.ccna_desc",
+  "CompTIA Security+": "course.security_plus_desc",
+  "AWS Cloud Practitioner": "course.aws_ccp_desc",
+  "PMP": "course.pmp_desc",
+};
+
 // Maps a raw skill.name value, as it may currently be stored in either
 // language, to the single translation key that resolves it correctly in
 // both languages via LanguageContext's t().
@@ -88,6 +122,21 @@ export function getLocalizedCourseName(
     return course.title;
   }
   return course.id ?? "";
+}
+
+export function getLocalizedCourseDescription(
+  course: { id?: string; title?: string | null; description?: string | null },
+  t: Translate
+): string {
+  const key =
+    (course.id && COURSE_ID_TO_DESC_KEY[course.id]) ||
+    (course.title && COURSE_TITLE_TO_DESC_KEY[course.title]);
+  if (key) return t(key);
+  if (course.description) {
+    console.warn(`contentLocalization: no description translation mapping for course "${course.title}" (id: ${course.id ?? "unknown"}) - showing as stored.`);
+    return course.description;
+  }
+  return "";
 }
 
 export function getLocalizedSkillName(rawName: string | null | undefined, t: Translate): string {

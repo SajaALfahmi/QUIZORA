@@ -43,7 +43,7 @@ const ResetPasswordPage = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <img src={logo} alt="Quizora" className="w-16 h-16 object-contain" />
+            <img src={logo} alt={t("app.name")} className="w-16 h-16 object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-2">{t("reset.title")}</h1>
           <p className="text-sm text-muted-foreground">{t("reset.enterNew")}</p>

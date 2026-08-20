@@ -9,7 +9,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { getLocalizedCourseName } from "@/lib/contentLocalization";
 import logo from "@/assets/logo.png";
 
 interface Review {
@@ -23,24 +22,50 @@ interface Review {
   initials: string;
 }
 
-const allCourses: Record<string, { title: string; description: string; includes: string[] }> = {
+// This page's own small content set - unrelated to the shared
+// course.*/course.*_desc keys in LanguageContext.tsx (those are keyed by
+// the real course catalog's UUIDs; this page's only populated entry ("5")
+// isn't one of them). Bilingual inline rather than routed through t() to
+// keep this page's content self-contained, matching its existing scope.
+const allCourses: Record<string, { title: { en: string; ar: string }; description: { en: string; ar: string }; includes: { en: string; ar: string }[] }> = {
   "5": {
-    title: "General Aptitude Test Preparation & Training",
-    description:
-      "Prepare for the general aptitude test through an interactive training platform powered by artificial intelligence. Solve verbal and quantitative questions that simulate the real test, get instant explanations and a personalized study plan that raises your score step by step.",
+    title: {
+      en: "General Aptitude Test Preparation & Training",
+      ar: "التحضير والتدريب على اختبار القدرات العامة",
+    },
+    description: {
+      en: "Prepare for the general aptitude test through an interactive training platform powered by artificial intelligence. Solve verbal and quantitative questions that simulate the real test, get instant explanations and a personalized study plan that raises your score step by step.",
+      ar: "استعد لاختبار القدرات العامة من خلال منصة تدريب تفاعلية مدعومة بالذكاء الاصطناعي. حل أسئلة لفظية وكمية تحاكي الاختبار الفعلي، واحصل على شروحات فورية وخطة دراسية مخصصة ترفع درجتك تدريجياً.",
+    },
     includes: [
-      "Verbal and quantitative training questions with progressive difficulty levels",
-      "Instant, AI-powered explanations for every question",
-      "Simulated exams with realistic timing",
-      "A personalized dashboard highlighting progress, strengths, and weaknesses",
+      {
+        en: "Verbal and quantitative training questions with progressive difficulty levels",
+        ar: "أسئلة تدريبية لفظية وكمية بمستويات صعوبة متدرجة",
+      },
+      {
+        en: "Instant, AI-powered explanations for every question",
+        ar: "شروحات فورية مدعومة بالذكاء الاصطناعي لكل سؤال",
+      },
+      {
+        en: "Simulated exams with realistic timing",
+        ar: "اختبارات محاكاة بتوقيت واقعي",
+      },
+      {
+        en: "A personalized dashboard highlighting progress, strengths, and weaknesses",
+        ar: "لوحة تحكم مخصصة تُبرز تقدمك ونقاط قوتك وضعفك",
+      },
     ],
   },
 };
 
 const defaultCourse = {
-  title: "Course Details",
-  description: "Detailed information about this course.",
-  includes: ["Comprehensive curriculum", "Expert instruction", "Practice materials"],
+  title: { en: "Course Details", ar: "تفاصيل الدورة" },
+  description: { en: "Detailed information about this course.", ar: "معلومات تفصيلية عن هذه الدورة." },
+  includes: [
+    { en: "Comprehensive curriculum", ar: "منهج شامل" },
+    { en: "Expert instruction", ar: "تعليم من خبراء" },
+    { en: "Practice materials", ar: "مواد تدريبية" },
+  ],
 };
 
 const StarRating = ({
@@ -83,7 +108,12 @@ const CourseDetailPage = () => {
   const { id } = useParams();
   const { t, language } = useLanguage();
   const { user } = useAuth();
-  const course = allCourses[id || ""] || defaultCourse;
+  const courseData = allCourses[id || ""] || defaultCourse;
+  const course = {
+    title: courseData.title[language],
+    description: courseData.description[language],
+    includes: courseData.includes.map((item) => item[language]),
+  };
 
   const [reviews, setReviews] = useState<Review[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -133,8 +163,8 @@ const CourseDetailPage = () => {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
         <div className="flex items-center justify-between px-6 py-3">
           <div className="flex items-center gap-2">
-            <img src={logo} alt="Quizora" className="w-8 h-8 object-contain" />
-            <span className="text-lg font-bold text-foreground hidden sm:inline">Quizora</span>
+            <img src={logo} alt={t("app.name")} className="w-8 h-8 object-contain" />
+            <span className="text-lg font-bold text-foreground hidden sm:inline">{t("app.name")}</span>
           </div>
           <div className="flex items-center gap-4">
             <button onClick={() => navigate("/dashboard")} className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground transition-colors">
@@ -169,7 +199,7 @@ const CourseDetailPage = () => {
               <div className="p-4 rounded-2xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/20">
                 <BookOpen className="w-10 h-10 text-foreground" />
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">{getLocalizedCourseName({ id, title: course.title }, t)}</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">{course.title}</h1>
             </div>
             <p className="text-muted-foreground leading-relaxed mb-6">{course.description}</p>
             <Button
@@ -336,7 +366,7 @@ const CourseDetailPage = () => {
       </div>
 
       <footer className="border-t border-border/50 bg-muted/30 py-4 text-center">
-        <p className="text-sm text-muted-foreground">© 2026 Quizora. All rights reserved.</p>
+        <p className="text-sm text-muted-foreground">{t("app.copyright")}</p>
       </footer>
     </div>
   );

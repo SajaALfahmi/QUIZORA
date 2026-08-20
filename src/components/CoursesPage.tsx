@@ -11,7 +11,7 @@ import AppLayout from "./layout/AppLayout";
 import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useToast } from "@/hooks/use-toast";
-import { getLocalizedCourseName } from "@/lib/contentLocalization";
+import { getLocalizedCourseName, getLocalizedCourseDescription } from "@/lib/contentLocalization";
 
 type Category = "qudurat" | "tahseeli" | "certifications";
 type TahseeliTrack = "scientific" | "literary" | null;
@@ -397,7 +397,7 @@ const CoursesPage = () => {
               const Icon = meta?.icon ?? Award;
               const isSelected = selectedCourseId === course.id;
               const title = getLocalizedCourseName(course, t);
-              const desc = course.description;
+              const desc = getLocalizedCourseDescription(course, t);
 
               return (
                 <Card

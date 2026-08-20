@@ -130,7 +130,7 @@ const SettingsPage = () => {
                     : "border-border/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
                 }`}
               >
-                🇺🇸 English
+                English
               </button>
               <button
                 onClick={() => setLanguage("ar")}
@@ -140,7 +140,7 @@ const SettingsPage = () => {
                     : "border-border/40 text-muted-foreground hover:border-primary/40 hover:text-foreground"
                 }`}
               >
-                🇸🇦 العربية
+                العربية
               </button>
             </div>
           </CardContent>

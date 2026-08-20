@@ -183,7 +183,7 @@ export default function ChatBot() {
         : "   - (Check the Courses page in the app for the current list if unsure)";
 
     const systemContent = isArabic
-      ? `أنت المساعد الذكي الرسمي لمنصة Quizora (منصة اختبارات ذكية وتوليد أسئلة تفاعلية تعتمد على خوارزمية الـ BKT).
+      ? `أنت المساعد الذكي الرسمي لمنصة QUIZORA (منصة اختبارات ذكية وتوليد أسئلة تفاعلية تعتمد على خوارزمية الـ BKT).
 يجب أن تتجاوب دائماً بنفس لغة المستخدم. إذا كتب بالعربي رد بالعربي، وإذا كتب بالإنجليزي رد بالإنجليزي.
 
 وظيفتك الوحيدة: الإجابة على أسئلة الطلاب العلمية وشرح المفاهيم في المواد المتاحة فقط، ومساعدتهم في فهم طريقة عمل المنصة.
@@ -194,7 +194,7 @@ export default function ChatBot() {
 ${courseListLine}
 3. إذا سألك الطالب عن مادة غير مذكورة في القائمة أعلاه أخبره: "هذه المادة تندرج حالياً ضمن خطتنا للعمل المستقبلي وقريباً ستكون متاحة".
 4. إجاباتك مختصرة ومباشرة بدون مقدمات طويلة.`
-      : `You are the official smart assistant for Quizora (an AI-powered smart testing and adaptive question platform running on BKT algorithm).
+      : `You are the official smart assistant for QUIZORA (an AI-powered smart testing and adaptive question platform running on BKT algorithm).
 You must always respond in the same language the user writes in. If the user writes in Arabic, respond in Arabic. If in English, respond in English.
 
 Your sole purpose is to answer educational questions, explain concepts for the CURRENTLY AVAILABLE courses only, and guide students on how the testing platform works.
@@ -254,7 +254,7 @@ ${courseListLine}
       <button
         onClick={toggleChat}
         className="fixed bottom-6 right-6 z-[9999] w-14 h-14 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center shadow-lg transition-transform active:scale-95 focus:outline-none"
-        aria-label="Toggle Assistant"
+        aria-label={isArabic ? "تبديل المساعد الذكي" : "Toggle Assistant"}
       >
         {open ? (
           <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">

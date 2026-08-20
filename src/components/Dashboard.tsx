@@ -111,7 +111,7 @@ const Dashboard = () => {
     </h3>
 
     <p className="text-sm text-muted-foreground mb-5">
-      Continue your previous learning sessions and track your progress.
+      {t("dashboard.continueLearningDesc")}
     </p>
   </div>
 

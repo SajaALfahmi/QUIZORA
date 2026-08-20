@@ -118,18 +118,18 @@ const QuestionsPage = () => {
 
   const loadingMessages = isAr
     ? [
-        "🧠 الذكاء الاصطناعي يولّد السؤال...",
-        "⚡ جاري تحليل مستواك وتجهيز سؤال مناسب...",
-        "✨ يتم إنشاء سؤال مخصص لك...",
-        "🔄 جاري ضبط مستوى الصعوبة...",
-        "📚 البحث في قاعدة المعرفة...",
+        "الذكاء الاصطناعي يولّد السؤال...",
+        "جاري تحليل مستواك وتجهيز سؤال مناسب...",
+        "يتم إنشاء سؤال مخصص لك...",
+        "جاري ضبط مستوى الصعوبة...",
+        "البحث في قاعدة المعرفة...",
       ]
     : [
-        "🧠 AI is generating your question...",
-        "⚡ Analyzing your level, preparing a tailored question...",
-        "✨ Creating a personalized question for you...",
-        "🔄 Calibrating difficulty level...",
-        "📚 Searching the knowledge base...",
+        "AI is generating your question...",
+        "Analyzing your level, preparing a tailored question...",
+        "Creating a personalized question for you...",
+        "Calibrating difficulty level...",
+        "Searching the knowledge base...",
       ];
 
   const getRandomLoadingMessage = () =>
@@ -204,7 +204,7 @@ const QuestionsPage = () => {
     const resumeSession = async () => {
       setShowSettings(false);
       setIsLoading(true);
-      setLoadingMessage(isAr ? "🚀 جاري استئناف الجلسة..." : "🚀 Resuming your previous session...");
+      setLoadingMessage(isAr ? "جاري استئناف الجلسة..." : "Resuming your previous session...");
 
       try {
         const { data: session } = await supabase
@@ -254,7 +254,7 @@ const QuestionsPage = () => {
 
         await fetchNextQuestion(resumeSessionId, selectedDifficulty, language);
       } catch (error: any) {
-        toast({ title: "Error", description: error?.message || "Unable to resume session.", variant: "destructive" });
+        toast({ title: t("common.error"), description: error?.message || t("questions.resumeError"), variant: "destructive" });
         setShowSettings(true);
         setIsLoading(false);
       }
@@ -279,10 +279,10 @@ const QuestionsPage = () => {
   const handleStartQuiz = async () => {
     setShowSettings(false);
     setIsLoading(true);
-    setLoadingMessage(isAr ? "🚀 جاري بدء الجلسة..." : "🚀 Starting session...");
+    setLoadingMessage(isAr ? "جاري بدء الجلسة..." : "Starting session...");
     try {
       if (!currentCourseId) {
-        toast({ title: "Error", description: "Please select a course.", variant: "destructive" });
+        toast({ title: t("common.error"), description: t("questions.selectCourseError"), variant: "destructive" });
         navigate("/courses");
         return;
       }
@@ -290,7 +290,7 @@ const QuestionsPage = () => {
       setSessionId(result.session.id);
       await fetchNextQuestion(result.session.id, selectedDifficulty, language);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
       navigate("/courses");
     }
   };
@@ -305,7 +305,7 @@ const QuestionsPage = () => {
       const result = await adaptiveEngine.getNextQuestion(sid, diffMode || selectedDifficulty, lang);
 
       if (result.finished) { setFinished(true); setIsLoading(false); return; }
-      if (!result.question) throw new Error("No question returned from adaptive engine.");
+      if (!result.question) throw new Error(t("questions.noQuestionReturned"));
       setCurrentQuestion(result.question);
       if (result.adaptive_info) setAdaptiveInfo(result.adaptive_info);
       setQuestionNumber((p) => p + 1);
@@ -314,7 +314,7 @@ const QuestionsPage = () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
       intervalRef.current = setInterval(() => { timerRef.current += 1; }, 1000);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
       setIsLoading(false);
     }
   };
@@ -335,7 +335,7 @@ const QuestionsPage = () => {
       // عرض الشرح تلقائياً إذا كان موجوداً في الرد
       if (result.explanation) setExplanation(result.explanation);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } finally { setIsSubmitting(false); }
   };
 
@@ -353,7 +353,7 @@ const QuestionsPage = () => {
       });
       setExplanation(result.explanation);
     } catch (error: any) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
+      toast({ title: t("common.error"), description: error.message, variant: "destructive" });
     } finally { setLoadingExplanation(false); }
   };
 
@@ -396,8 +396,8 @@ const QuestionsPage = () => {
         <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/50">
           <div className="flex items-center justify-between px-6 py-3">
             <div className="flex items-center gap-2">
-              <img src={logo} alt="Quizora" className="w-8 h-8 object-contain" />
-              <span className="text-lg font-bold text-foreground hidden sm:inline">Quizora</span>
+              <img src={logo} alt={t("app.name")} className="w-8 h-8 object-contain" />
+              <span className="text-lg font-bold text-foreground hidden sm:inline">{t("app.name")}</span>
             </div>
             <button onClick={() => navigate("/dashboard")} className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground">
               <Home className="w-5 h-5" />
@@ -578,7 +578,7 @@ const QuestionsPage = () => {
             <div className="p-1.5 rounded-lg bg-gradient-to-br from-primary/20 to-secondary/20 border border-primary/30">
               <BookOpen className="w-5 h-5 text-primary" />
             </div>
-            <span className="text-lg font-bold text-primary">Quizora</span>
+            <span className="text-lg font-bold text-primary">{t("app.name")}</span>
           </div>
           <div className="flex items-center gap-4">
             <button onClick={() => navigate("/dashboard")} className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground">
@@ -623,7 +623,7 @@ const QuestionsPage = () => {
 
         {/* LOADING with Skeleton */}
         {isLoading ? (
-          <QuestionSkeleton message={loadingMessage || (isAr ? "🧠 جاري التوليد..." : "🧠 Generating...")} />
+          <QuestionSkeleton message={loadingMessage || (isAr ? "جاري التوليد..." : "Generating...")} />
         ) : currentQuestion ? (
           <>
             <Card className="bg-card/80 border border-border/30 mb-5">
