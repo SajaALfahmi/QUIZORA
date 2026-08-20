@@ -1,6 +1,55 @@
 import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
+interface CourseInfo {
+  title: string;
+  category: string;
+}
+
+// Arabic/English labels for course categories, used only to group the
+// dynamically-fetched course list below - not a course list itself, so it
+// can't go stale the way a hardcoded course list can.
+const CATEGORY_LABELS: Record<string, { ar: string; en: string }> = {
+  qudurat: { ar: "القدرات", en: "Qudurat" },
+  tahseeli: { ar: "التحصيلي", en: "Tahseeli" },
+  certifications: { ar: "الشهادات المهنية", en: "Professional Certifications" },
+};
+
+// Strips a redundant "Tahseeli - " / "Qudurat - " prefix from a course
+// title when it duplicates the category label already shown alongside it.
+function stripCategoryPrefix(title: string): string {
+  return title.replace(/^(Tahseeli|Qudurat)\s*-\s*/i, "").trim();
+}
+
+// Courses intentionally held back from launch (isFutureWork: true in
+// CoursesPage.tsx's defaultCourses array) even though they may already have
+// question content in the database - e.g. deliberately out of scope for the
+// current hackathon. The Courses page is the source of truth for this
+// decision, not the database, so it can't be derived from a live query; keep
+// this in sync by hand with CoursesPage.tsx's isFutureWork flags.
+const FUTURE_WORK_COURSE_TITLES = new Set([
+  "Tahseeli - Mathematics",
+  "Tahseeli - Physics",
+]);
+
+// Builds the chatbot's course-list line directly from whatever courses
+// actually have questions right now, so it can never claim a live course is
+// "Future Work" (or vice versa) the way a hardcoded list eventually would.
+function buildCourseListText(courses: CourseInfo[], arabic: boolean): string {
+  const byCategory = new Map<string, string[]>();
+  for (const c of courses) {
+    const list = byCategory.get(c.category) || [];
+    list.push(stripCategoryPrefix(c.title));
+    byCategory.set(c.category, list);
+  }
+  const lines: string[] = [];
+  for (const [category, titles] of byCategory) {
+    const label = CATEGORY_LABELS[category]?.[arabic ? "ar" : "en"] || category;
+    lines.push(`${label}: ${titles.join(arabic ? "، " : ", ")}`);
+  }
+  return lines.join(arabic ? "\n   - " : "\n   - ");
+}
+
 const RobotIcon = ({ className = "w-5 h-5" }) => (
   <svg
     viewBox="0 0 24 24"
@@ -41,9 +90,53 @@ export default function ChatBot() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Fetched once and cached for the component's lifetime, rather than a
+  // hardcoded list in the system prompt below - courses that actually have
+  // questions are the only ones ever described to a student as available,
+  // so this can't drift out of sync with the real database the way a
+  // hardcoded list did. FUTURE_WORK_COURSE_TITLES is then subtracted so this
+  // still matches what CoursesPage.tsx actually shows a student, even for a
+  // course that already has DB content but hasn't launched yet.
+  const [availableCourses, setAvailableCourses] = useState<CourseInfo[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data: questionRows } = await supabase.from("questions").select("course_id");
+        const liveCourseIds = [...new Set((questionRows || []).map((r: any) => r.course_id).filter(Boolean))];
+        if (liveCourseIds.length === 0) return;
+        const { data: courseRows } = await supabase
+          .from("courses")
+          .select("title, category")
+          .in("id", liveCourseIds);
+        const launchedCourses = (courseRows as CourseInfo[] | null)?.filter(
+          (c) => !FUTURE_WORK_COURSE_TITLES.has(c.title)
+        );
+        if (!cancelled && launchedCourses) setAvailableCourses(launchedCourses);
+      } catch (err) {
+        console.error("Error fetching available courses for chatbot:", err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
+
+  // Keep the static greeting in sync with a language switch while it's
+  // still the untouched initial message - never overwrites an actual
+  // conversation in progress (real messages are meant to stay in whatever
+  // language the user/assistant actually used, matching the system
+  // prompt's own "respond in the same language the user writes in" rule).
+  useEffect(() => {
+    setMessages(prev =>
+      prev.length === 1 && prev[0].role === "assistant"
+        ? [{ role: "assistant", content: isArabic ? "مرحبا! كيف اقدر اساعدك؟" : "Hello! How can I help you?" }]
+        : prev
+    );
+  }, [isArabic]);
 
   function toggleChat() {
     if (open) {
@@ -76,6 +169,19 @@ export default function ChatBot() {
       console.error("Error saving user message:", err);
     }
 
+    // Falls back to directing the student to the Courses page - never to a
+    // specific hardcoded list - if the live fetch hasn't resolved yet or
+    // failed, so the assistant can't repeat a stale/wrong availability claim
+    // either way.
+    const courseListText = availableCourses && availableCourses.length > 0
+      ? buildCourseListText(availableCourses, isArabic)
+      : null;
+    const courseListLine = courseListText
+      ? `   - ${courseListText}`
+      : isArabic
+        ? "   - (راجع صفحة الكورسات داخل المنصة للاطلاع على القائمة الحالية إذا لم تكن متأكداً)"
+        : "   - (Check the Courses page in the app for the current list if unsure)";
+
     const systemContent = isArabic
       ? `أنت المساعد الذكي الرسمي لمنصة Quizora (منصة اختبارات ذكية وتوليد أسئلة تفاعلية تعتمد على خوارزمية الـ BKT).
 يجب أن تتجاوب دائماً بنفس لغة المستخدم. إذا كتب بالعربي رد بالعربي، وإذا كتب بالإنجليزي رد بالإنجليزي.
@@ -84,11 +190,9 @@ export default function ChatBot() {
 
 قواعد صارمة التزم بها تماماً:
 1. المنصة تقدم (أسئلة، خيارات متعددة، تقييم ذكي، وشروحات للإجابات) وليس بها كورسات فيديو أو مشاريع أو دعم عملاء.
-2. الكورسات المتاحة حالياً:
-   - القدرات: كمّي، ولفظي.
-   - التحصيلي (القسم العلمي): كيمياء، وأحياء فقط. (الرياضيات والفيزياء Future Work غير مدعومة حالياً).
-   - الشهادات المهنية: CCNA، CompTIA Security+، AWS Cloud Practitioner، PMP.
-3. إذا سألك الطالب عن مادة غير مدعومة أخبره: "هذه المادة تندرج حالياً ضمن خطتنا للعمل المستقبلي وقريباً ستكون متاحة".
+2. الكورسات المتاحة حالياً (هذه القائمة هي المصدر الوحيد الموثوق - لا تفترض توفر أو عدم توفر أي مادة أخرى):
+${courseListLine}
+3. إذا سألك الطالب عن مادة غير مذكورة في القائمة أعلاه أخبره: "هذه المادة تندرج حالياً ضمن خطتنا للعمل المستقبلي وقريباً ستكون متاحة".
 4. إجاباتك مختصرة ومباشرة بدون مقدمات طويلة.`
       : `You are the official smart assistant for Quizora (an AI-powered smart testing and adaptive question platform running on BKT algorithm).
 You must always respond in the same language the user writes in. If the user writes in Arabic, respond in Arabic. If in English, respond in English.
@@ -97,11 +201,9 @@ Your sole purpose is to answer educational questions, explain concepts for the C
 
 Strict Rules:
 1. The platform ONLY provides (Multiple-choice questions, adaptive quizzes via BKT, and answer explanations). No video courses, certificates, assignments, or customer support.
-2. Currently active courses:
-   - Qudurat: Quantitative and Verbal.
-   - Tahsili (Science): Chemistry and Biology ONLY. (Mathematics and Physics are Future Work and NOT available).
-   - Professional Certifications: CCNA, CompTIA Security+, AWS Cloud Practitioner, and PMP.
-3. If a student asks about an unsupported subject reply: "This subject is currently part of our Future Work roadmap and will be available soon."
+2. Currently active courses (this list is the only reliable source - never assume any other subject is or isn't available):
+${courseListLine}
+3. If a student asks about a subject not listed above, reply: "This subject is currently part of our Future Work roadmap and will be available soon."
 4. Keep responses concise, direct, and professional.`;
 
     try {

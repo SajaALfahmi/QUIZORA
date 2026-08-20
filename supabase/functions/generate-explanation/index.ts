@@ -125,17 +125,25 @@ serve(async (req) => {
     }
 
     // =========================
-    // GET CORRECT ANSWER
+    // GET ALL OPTIONS
     // =========================
 
-    const { data: correctOption } = await supabase
+    // The full option set (not just the correct one) is required so the
+    // explanation can be grounded in what the student actually saw - an
+    // explanation generated without seeing the distractors has no way to
+    // address why they're wrong, and tends to introduce facts/options that
+    // were never on the question at all.
+    const { data: allOptions } = await supabase
       .from("answer_options")
-      .select("content")
+      .select("content, is_correct")
       .eq("question_id", question_id)
-      .eq("is_correct", true)
-      .maybeSingle();
+      .order("order_index", { ascending: true });
 
-    const correctAnswer = correctOption?.content ?? "";
+    const options: { content: string; is_correct: boolean }[] = allOptions ?? [];
+    const correctAnswer = options.find((o) => o.is_correct)?.content ?? "";
+    const optionsListText = options
+      .map((o, i) => `${i + 1}. ${o.content}${o.is_correct ? " (correct)" : ""}`)
+      .join("\n");
 
     // =========================
     // OPENAI REQUEST
@@ -158,10 +166,15 @@ serve(async (req) => {
               content: `
 You are an expert AI tutor.
 
-Generate clear and adaptive explanations.
-Make every explanation unique.
-Avoid repetitive wording.
-Adjust the explanation style based on question difficulty.
+Generate clear and adaptive explanations grounded ONLY in the specific question and options given to you - never introduce a fact, term, protocol, or option that isn't part of the question or its option list, even if it's genuinely related to the topic.
+
+Requirements for every explanation:
+1. Show the reasoning/calculation that leads to the answer.
+2. End with an explicit final answer statement (e.g. "so x = 4" / "so the answer is Amazon S3") - never leave the answer only implied by the steps.
+3. When it meaningfully helps understanding, briefly note why the other listed options are incorrect - but only using the options actually given, never inventing additional ones.
+4. Adjust depth/style to the question's difficulty, but always stay strictly within the scope of the question and its options.
+
+Make every explanation unique. Avoid repetitive wording.
 Always respond ${language === "ar" ? "in Arabic" : "in English"}, regardless of the language the question itself is written in.
 `,
             },
@@ -171,10 +184,13 @@ Always respond ${language === "ar" ? "in Arabic" : "in English"}, regardless of 
 Question:
 ${question.content}
 
+Options:
+${optionsListText}
+
 Correct Answer:
 ${correctAnswer}
 
-Generate a detailed explanation in ${language === "ar" ? "Arabic" : "English"}.
+Generate a detailed explanation in ${language === "ar" ? "Arabic" : "English"} that ends with an explicit statement of the final answer, and is grounded only in the options listed above.
 `,
             },
           ],
