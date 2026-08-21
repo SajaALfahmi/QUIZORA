@@ -40,6 +40,44 @@ function masteryToDifficulty(mastery: number): string {
   return "easy";
 }
 
+// ===== Session-local difficulty ladder =====
+// Historical BKT mastery (masteryToDifficulty above) is the seed for a
+// session's FIRST question only - captured once in handleStartSession and
+// frozen in learning_sessions.starting_difficulty. Everything after that
+// is driven purely by this session's own answers, replayed here, so a
+// student's persistent cross-session mastery can never keep serving Hard
+// through a session where they are currently doing poorly, while a
+// genuinely strong student still opens on Hard as their history warrants.
+const DIFFICULTY_STEPS = ["easy", "medium", "hard"] as const;
+
+function stepDifficulty(tier: string, delta: number): string {
+  const idx = DIFFICULTY_STEPS.indexOf(tier as (typeof DIFFICULTY_STEPS)[number]);
+  const safeIdx = idx === -1 ? 1 : idx; // unknown tier defaults to medium, never throws
+  const newIdx = Math.max(0, Math.min(DIFFICULTY_STEPS.length - 1, safeIdx + delta));
+  return DIFFICULTY_STEPS[newIdx];
+}
+
+function computeSessionDifficulty(
+  seedTier: string,
+  sessionAnswersInOrder: { is_correct: boolean }[]
+): string {
+  let difficulty = seedTier;
+  let correctStreak = 0;
+  for (const answer of sessionAnswersInOrder) {
+    if (answer.is_correct) {
+      correctStreak++;
+      if (correctStreak >= 2) {
+        difficulty = stepDifficulty(difficulty, +1);
+        correctStreak = 0; // climbing again requires a fresh pair at the new level
+      }
+    } else {
+      correctStreak = 0;
+      difficulty = stepDifficulty(difficulty, -1);
+    }
+  }
+  return difficulty;
+}
+
 // Single, explicit place where an invalid/missing language value is resolved.
 // Any fallback here is logged, never silent, so a dropped/omitted language
 // argument upstream is visible instead of quietly behaving like "en".
@@ -177,8 +215,25 @@ Deno.serve(async (req: Request) => {
 async function handleStartSession(supabaseService: any, userId: string, payload: StartSessionPayload) {
   const { course_id, total_questions, difficulty_mode, language } = payload;
   const sessionLanguage = normalizeLanguage(language);
+  const normalizedDifficultyMode = normalizeDifficultyMode(difficulty_mode);
 
-  await ensureCourseExists(supabaseService, course_id, sessionLanguage);
+  const skillId = await ensureCourseExists(supabaseService, course_id, sessionLanguage);
+
+  // Seed for the session-local difficulty ladder (see computeSessionDifficulty
+  // above) - captured once, here, before this session has any answers, so it
+  // reflects genuine cross-session BKT mastery rather than a value that could
+  // later drift mid-session from this same session's own answers. Only
+  // meaningful in auto mode; manual-mode sessions never read this column.
+  let startingDifficulty: string | null = null;
+  if (normalizedDifficultyMode === "auto" && skillId) {
+    const { data: skillLevel } = await supabaseService
+      .from("user_skill_levels")
+      .select("mastery_level")
+      .eq("user_id", userId)
+      .eq("skill_id", skillId)
+      .maybeSingle();
+    startingDifficulty = masteryToDifficulty(skillLevel?.mastery_level ?? BKT.P_L0);
+  }
 
   const { data: session, error } = await supabaseService
     .from("learning_sessions")
@@ -187,8 +242,9 @@ async function handleStartSession(supabaseService: any, userId: string, payload:
       course_id,
       status: "active",
       total_questions: total_questions ?? 25,
-      difficulty_mode: normalizeDifficultyMode(difficulty_mode), // ✅ الصح
+      difficulty_mode: normalizedDifficultyMode, // ✅ الصح
       language: sessionLanguage,
+      starting_difficulty: startingDifficulty,
     })
     .select()
     .single();
@@ -293,7 +349,7 @@ async function handleNextQuestion(supabaseService: any, userId: string, sessionI
 
   const { data: session, error: sessionError } = await supabaseService
     .from("learning_sessions")
-    .select("id, course_id, total_questions, difficulty_mode, language") // ✅ الصح
+    .select("id, course_id, total_questions, difficulty_mode, language, starting_difficulty") // ✅ الصح
     .eq("id", sessionId)
     .single();
 
@@ -319,8 +375,9 @@ async function handleNextQuestion(supabaseService: any, userId: string, sessionI
 
   const { data: answeredQuestions } = await supabaseService
     .from("user_answers")
-    .select("question_id")
-    .eq("session_id", sessionId);
+    .select("question_id, is_correct, answered_at")
+    .eq("session_id", sessionId)
+    .order("answered_at", { ascending: true });
 
   const askedQuestionIds = (answeredQuestions || []).map((r: any) => r.question_id);
 
@@ -381,22 +438,17 @@ async function handleNextQuestion(supabaseService: any, userId: string, sessionI
   let targetDifficulty = "medium";
 
   if (difficultyMode === "auto") {
-    const skillIds = [...new Set(languagePool.map((q: any) => q.skill_id).filter(Boolean))];
-    if (skillIds.length > 0) {
-      const { data: skillLevels } = await supabaseService
-        .from("user_skill_levels")
-        .select("skill_id, mastery_level")
-        .eq("user_id", userId)
-        .in("skill_id", skillIds);
-
-      if (skillLevels && skillLevels.length > 0) {
-        const avgMastery = skillLevels.reduce((sum: number, s: any) => sum + s.mastery_level, 0) / skillLevels.length;
-        targetDifficulty = masteryToDifficulty(avgMastery);
-        console.log(`BKT auto: mastery=${avgMastery.toFixed(3)} → ${targetDifficulty}`);
-      } else {
-        targetDifficulty = masteryToDifficulty(BKT.P_L0);
-      }
-    }
+    // Seed is the historical BKT tier frozen at session start (see
+    // handleStartSession) - never re-derived from user_skill_levels here,
+    // since that value keeps changing from this same session's own answers
+    // and would otherwise re-inject exactly the cross-session-mastery
+    // volatility this ladder exists to remove. Falls back to the default
+    // "no prior data" tier only for sessions created before this column
+    // existed (starting_difficulty is null on historical rows).
+    const seedTier = session.starting_difficulty ?? masteryToDifficulty(BKT.P_L0);
+    const sessionAnswersInOrder = (answeredQuestions || []).map((r: any) => ({ is_correct: r.is_correct }));
+    targetDifficulty = computeSessionDifficulty(seedTier, sessionAnswersInOrder);
+    console.log(`Session ladder: seed=${seedTier} answers=${sessionAnswersInOrder.length} → ${targetDifficulty}`);
   } else {
     // Manual mode
     targetDifficulty = difficultyMode;
@@ -623,6 +675,8 @@ async function ensureCourseExists(supabaseService: any, courseId: string, langua
   // capped at 2 attempts for the one specific difficulty actually needed) -
   // that path is fast, already proven safe, and is sufficient on its own, so
   // start-session no longer needs to (and must not) block on bulk generation.
+
+  return skillId as string | undefined;
 }
 
 interface AnswerOptionCandidate {
