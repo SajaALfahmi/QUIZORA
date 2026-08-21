@@ -226,9 +226,26 @@ const EvaluationPage = () => {
   const timeMinutes = Math.floor(timeSpentSeconds / 60);
   const timeSeconds = timeSpentSeconds % 60;
 
+  // Questions Attempted = percentage of THIS session's assigned questions
+  // that were actually answered - session-scoped data (from the navigation
+  // state QuestionsPage.tsx passes on session end), not cumulative
+  // lifetime user_answers. Previously used
+  // stats.totalQuestions / (stats.totalQuestions + 10), an arbitrary
+  // diminishing-returns curve with no relationship to "percentage
+  // attempted" - a first-ever 5-question, 5/5-answered session showed 33%
+  // instead of 100%. Falls back to treating the session as fully attempted
+  // only if the assigned count is genuinely unavailable (e.g. stale
+  // navigation state from before this field existed), never to the old
+  // formula.
+  const questionsAnsweredThisSession = stateData.totalQuestions;
+  const questionsAssignedThisSession = stateData.totalQuestionsAssigned || questionsAnsweredThisSession || 1;
+  const questionsAttemptedScore = typeof questionsAnsweredThisSession === "number"
+    ? Math.min(100, Math.round((questionsAnsweredThisSession / Math.max(1, questionsAssignedThisSession)) * 100))
+    : 0;
+
   const categories = [
     { name: t("eval.overallAccuracy"), score: overallScore, icon: Brain, color: "from-primary to-primary/40" },
-    { name: t("eval.questionsAttempted"), score: Math.min(100, Math.round((stats.totalQuestions / Math.max(1, stats.totalQuestions + 10)) * 100)), icon: Target, color: "from-secondary to-secondary/40" },
+    { name: t("eval.questionsAttempted"), score: questionsAttemptedScore, icon: Target, color: "from-secondary to-secondary/40" },
     { name: t("eval.completionRate"), score: stats.totalSessions > 0 ? Math.round((stats.completedSessions / stats.totalSessions) * 100) : 0, icon: TrendingUp, color: "from-accent to-accent/40" },
     { name: t("eval.streak"), score: Math.min(100, stats.currentStreak * 10), icon: Star, color: "from-primary to-secondary/40" },
   ];

@@ -6,7 +6,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import {
   ArrowLeft, Check, BookOpen, Home, Loader2, Lightbulb,
-  ArrowRight, Settings, Clock, HelpCircle, Sparkles, Brain, Zap
+  ArrowRight, Settings, Clock, HelpCircle, Sparkles, Brain
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { adaptiveEngine, aiService } from "@/services/adaptiveEngine";
@@ -28,17 +28,16 @@ type DifficultyOption = "auto" | "easy" | "medium" | "hard";
 const questionCounts = [5, 10, 15, 20, 25];
 
 /* ══ Skeleton Loader ══ */
-const QuestionSkeleton = ({ message }: { message: string }) => (
+const QuestionSkeleton = ({ message, isAr }: { message: string; isAr: boolean }) => (
   <div className="space-y-5 animate-pulse">
     <div className="flex items-center gap-3 p-4 rounded-2xl bg-violet-500/10 border border-violet-500/20">
       <div className="w-8 h-8 rounded-full bg-violet-500/20 flex items-center justify-center flex-shrink-0">
-        <Brain className="w-4 h-4 text-violet-400 animate-pulse" />
+        <Loader2 className="w-4 h-4 text-violet-400 animate-spin" />
       </div>
       <div>
         <p className="text-sm font-medium text-violet-300">{message}</p>
-        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
-          <Zap className="w-3 h-3 text-amber-400" />
-          Powered by Generative AI
+        <p className="text-xs text-muted-foreground mt-0.5">
+          {isAr ? "مدعوم بالذكاء الاصطناعي التوليدي" : "Powered by Generative AI"}
         </p>
       </div>
       <div className="ms-auto flex gap-1">
@@ -110,11 +109,20 @@ const QuestionsPage = () => {
   const [adaptiveInfo, setAdaptiveInfo] = useState<any>(null);
   const [questionNumber, setQuestionNumber] = useState(0);
   const [totalCorrect, setTotalCorrect] = useState(0);
+  // Distinct from questionNumber, which increments at FETCH time (as soon
+  // as a question is displayed) and is used for progress-bar/header
+  // display elsewhere - left untouched. This counts only questions that
+  // were actually answered (handleSubmitAnswer succeeded), so ending the
+  // session via the in-quiz "End Session" button while the current
+  // question is still on-screen and unanswered doesn't overcount it as
+  // attempted.
+  const [answeredCount, setAnsweredCount] = useState(0);
   const totalTimerRef = useRef<number>(0);
   const totalIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const [finished, setFinished] = useState(false);
   const timerRef = useRef<number>(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const resumingSessionRef = useRef<string | null>(null);
 
   const loadingMessages = isAr
     ? [
@@ -199,7 +207,14 @@ const QuestionsPage = () => {
 
   useEffect(() => {
     if (!user || !resumeSessionId) return;
-    if (!showSettings && sessionId === resumeSessionId) return;
+    if (sessionId === resumeSessionId) return;
+    // Guards against this same effect re-triggering itself: setShowSettings(false)
+    // below is one of this effect's own dependencies, so without this ref the
+    // dependency-driven re-run (which fires before the async work below has
+    // reached setSessionId()) would start a second, concurrent resumeSession()
+    // call racing the first one for isLoading/currentQuestion state.
+    if (resumingSessionRef.current === resumeSessionId) return;
+    resumingSessionRef.current = resumeSessionId;
 
     const resumeSession = async () => {
       setShowSettings(false);
@@ -257,11 +272,12 @@ const QuestionsPage = () => {
         toast({ title: t("common.error"), description: error?.message || t("questions.resumeError"), variant: "destructive" });
         setShowSettings(true);
         setIsLoading(false);
+        resumingSessionRef.current = null;
       }
     };
 
     resumeSession();
-  }, [user, resumeSessionId, currentCourseId, currentCourseName, currentCourseDescription, showSettings, isAr, toast]);
+  }, [user, resumeSessionId, currentCourseId, currentCourseName, currentCourseDescription, sessionId, isAr, toast]);
 
   useEffect(() => {
     if (!sessionId || !currentCourseId) return;
@@ -291,6 +307,7 @@ const QuestionsPage = () => {
       await fetchNextQuestion(result.session.id, selectedDifficulty, language);
     } catch (error: any) {
       toast({ title: t("common.error"), description: error.message, variant: "destructive" });
+      setIsLoading(false);
       navigate("/courses");
     }
   };
@@ -331,6 +348,7 @@ const QuestionsPage = () => {
         time_spent_seconds: timerRef.current,
       });
       setLastResult(result); setShowResult(true);
+      setAnsweredCount((p) => p + 1);
       if (result.is_correct) setTotalCorrect((p) => p + 1);
       // عرض الشرح تلقائياً إذا كان موجوداً في الرد
       if (result.explanation) setExplanation(result.explanation);
@@ -372,7 +390,8 @@ const QuestionsPage = () => {
     localStorage.removeItem("quizora-continue-session");
     navigate("/evaluation", {
       state: {
-        totalQuestions: questionNumber,
+        totalQuestions: answeredCount,
+        totalQuestionsAssigned: selectedCount,
         totalCorrect,
         sessionId,
         courseId: currentCourseId,
@@ -623,7 +642,7 @@ const QuestionsPage = () => {
 
         {/* LOADING with Skeleton */}
         {isLoading ? (
-          <QuestionSkeleton message={loadingMessage || (isAr ? "جاري التوليد..." : "Generating...")} />
+          <QuestionSkeleton message={loadingMessage || (isAr ? "جاري التوليد..." : "Generating...")} isAr={isAr} />
         ) : currentQuestion ? (
           <>
             <Card className="bg-card/80 border border-border/30 mb-5">

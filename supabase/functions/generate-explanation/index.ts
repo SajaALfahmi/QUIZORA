@@ -39,6 +39,24 @@ function looksLikeLanguage(text: string, lang: "ar" | "en"): boolean {
   return englishCount > 0 && arabicCount <= englishCount * QUOTE_TOLERANCE;
 }
 
+// Determines which language the QUESTION itself is actually written in, by
+// dominant script - the same counting approach as looksLikeLanguage() above,
+// just returning the winner instead of testing against one target. Used so
+// the explanation is generated in the language the student is actually
+// looking at, rather than blindly trusting the frontend's requested
+// language, which can legitimately disagree with the served question (e.g.
+// a translation/generation fallback elsewhere served the wrong language).
+// Returns null when the content has no clear script signal (e.g. a
+// question that's mostly numbers/symbols) - in that case the caller falls
+// back to the requested language rather than guessing.
+function detectQuestionLanguage(content: string, options: string[]): "ar" | "en" | null {
+  const combined = [content, ...options].join(" ");
+  const arabicCount = (combined.match(/[\u0600-\u06FF]/g) || []).length;
+  const englishCount = (combined.match(/[A-Za-z]/g) || []).length;
+  if (arabicCount === 0 && englishCount === 0) return null;
+  return arabicCount >= englishCount ? "ar" : "en";
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", {
@@ -88,7 +106,7 @@ serve(async (req) => {
       throw new Error("question_id is required");
     }
 
-    const language = normalizeLanguage(requestedLanguage);
+    const requestedLang = normalizeLanguage(requestedLanguage);
 
     // =========================
     // GET QUESTION
@@ -103,6 +121,42 @@ serve(async (req) => {
     if (questionError || !question) {
       throw new Error("Question not found");
     }
+
+    // =========================
+    // GET ALL OPTIONS
+    // =========================
+
+    // The full option set (not just the correct one) is required so the
+    // explanation can be grounded in what the student actually saw - an
+    // explanation generated without seeing the distractors has no way to
+    // address why they're wrong, and tends to introduce facts/options that
+    // were never on the question at all. Fetched before the language check
+    // below so detection can see the options too, not just the stem.
+    const { data: allOptions } = await supabase
+      .from("answer_options")
+      .select("content, is_correct")
+      .eq("question_id", question_id)
+      .order("order_index", { ascending: true });
+
+    // =========================
+    // DETERMINE ACTUAL LANGUAGE
+    // =========================
+
+    // The requested language is the frontend's session language, but the
+    // served question can legitimately disagree with it (a translation or
+    // generation fallback elsewhere may have served the wrong language) -
+    // generating the explanation in the REQUESTED language regardless would
+    // reproduce exactly that mismatch one field over. The actual question
+    // content/options are authoritative here; the requested language is
+    // only used when the content has no clear script signal to detect.
+    const detectedLang = detectQuestionLanguage(
+      question.content ?? "",
+      (allOptions ?? []).map((o: { content: string }) => o.content)
+    );
+    if (detectedLang && detectedLang !== requestedLang) {
+      console.warn(`generate-explanation: question ${question_id} is actually "${detectedLang}" but requested language was "${requestedLang}" - generating in the question's actual language instead`);
+    }
+    const language = detectedLang ?? requestedLang;
 
     // =========================
     // RETURN EXISTING EXPLANATION
@@ -123,21 +177,6 @@ serve(async (req) => {
         }
       );
     }
-
-    // =========================
-    // GET ALL OPTIONS
-    // =========================
-
-    // The full option set (not just the correct one) is required so the
-    // explanation can be grounded in what the student actually saw - an
-    // explanation generated without seeing the distractors has no way to
-    // address why they're wrong, and tends to introduce facts/options that
-    // were never on the question at all.
-    const { data: allOptions } = await supabase
-      .from("answer_options")
-      .select("content, is_correct")
-      .eq("question_id", question_id)
-      .order("order_index", { ascending: true });
 
     const options: { content: string; is_correct: boolean }[] = allOptions ?? [];
     const correctAnswer = options.find((o) => o.is_correct)?.content ?? "";
@@ -175,7 +214,7 @@ Requirements for every explanation:
 4. Adjust depth/style to the question's difficulty, but always stay strictly within the scope of the question and its options.
 
 Make every explanation unique. Avoid repetitive wording.
-Always respond ${language === "ar" ? "in Arabic" : "in English"}, regardless of the language the question itself is written in.
+Always respond ${language === "ar" ? "in Arabic" : "in English"} - this matches the actual language of the question and options below.
 `,
             },
             {
