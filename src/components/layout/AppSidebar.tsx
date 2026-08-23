@@ -9,6 +9,7 @@ import {
   Settings,
   PlayCircle,
   LogOut,
+  Sparkles,
 } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
@@ -32,6 +33,7 @@ const AppSidebar = ({ collapsed }: AppSidebarProps) => {
     { label: t("nav.results"), icon: FileText, path: "/evaluation" },
     { label: t("nav.profile"), icon: User, path: "/profile" },
     { label: t("nav.reports"), icon: BarChart3, path: "/reports" },
+    { label: t("nav.policyAnalysis"), icon: Sparkles, path: "/policy-analysis" },
   ];
 
   const handleSignOut = async () => {

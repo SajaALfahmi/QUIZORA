@@ -18,6 +18,7 @@ import EvaluationPage from "./components/EvaluationPage";
 import ProfilePage from "./components/ProfilePage";
 import ReportsPage from "./components/ReportsPage";
 import SettingsPage from "./components/SettingsPage";
+import ScenarioAnalysisPage from "./components/ScenarioAnalysisPage";
 import NotFound from "./pages/NotFound";
 import ChatBot from "./components/ChatBot";
 
@@ -104,6 +105,14 @@ const App = () => (
                 element={
                   <ProtectedRoute>
                     <SettingsPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/policy-analysis"
+                element={
+                  <ProtectedRoute>
+                    <ScenarioAnalysisPage />
                   </ProtectedRoute>
                 }
               />
