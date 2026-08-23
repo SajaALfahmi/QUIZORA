@@ -78,8 +78,11 @@ const handleSocialLogin = async (provider: "google" | "apple") => {
   const { error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-     // redirectTo: `${window.location.origin}/dashboard`
-     redirectTo: window.location.origin
+     // window.location.origin already resolves to whatever host is
+     // currently serving the page (localhost in dev, the real domain in
+     // production), so appending /dashboard here stays environment-safe
+     // without hardcoding any host.
+     redirectTo: `${window.location.origin}/dashboard`
     }
   });
 

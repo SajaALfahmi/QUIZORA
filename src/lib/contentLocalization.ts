@@ -85,6 +85,29 @@ const COURSE_TITLE_TO_DESC_KEY: Record<string, string> = {
 // language, to the single translation key that resolves it correctly in
 // both languages via LanguageContext's t().
 const SKILL_NAME_TO_KEY: Record<string, string> = {
+  // Actual stored skill.name values (lowercase subject + " Fundamentals"),
+  // confirmed against the live skills table - this is the primary set that
+  // real requests hit.
+  "arabic Fundamentals": "skill.arabic_fundamentals",
+  "aws Fundamentals": "skill.cloud_fundamentals",
+  "biology Fundamentals": "skill.biology_fundamentals",
+  "ccna Fundamentals": "skill.network_fundamentals",
+  "chemistry Fundamentals": "skill.chemistry_fundamentals",
+  "english Fundamentals": "skill.english_fundamentals",
+  "geography Fundamentals": "skill.geography_fundamentals",
+  "history Fundamentals": "skill.history_fundamentals",
+  "islamic Fundamentals": "skill.islamic_fundamentals",
+  "mathematics Fundamentals": "skill.mathematics_fundamentals",
+  "physics Fundamentals": "skill.physics_fundamentals",
+  "pmp Fundamentals": "skill.project_management",
+  "quantitative Fundamentals": "skill.quantitative_reasoning",
+  "security Fundamentals": "skill.security_fundamentals",
+  "sociology Fundamentals": "skill.sociology_fundamentals",
+  "verbal Fundamentals": "skill.verbal_reasoning",
+  "Unknown": "skill.unknown",
+
+  // Older/alternate forms kept for defense-in-depth in case any legacy row
+  // or seed script still writes one of these instead of the form above.
   "Verbal Reasoning": "skill.verbal_reasoning",
   "التفكير اللفظي": "skill.verbal_reasoning",
   "Quantitative Reasoning": "skill.quantitative_reasoning",

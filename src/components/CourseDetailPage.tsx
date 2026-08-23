@@ -135,7 +135,7 @@ const CourseDetailPage = () => {
       .join("");
     const newReview: Review = {
       id: Date.now().toString(),
-      name: user?.email?.split("@")[0] || "Anonymous",
+      name: user?.email?.split("@")[0] || (language === "ar" ? "مستخدم مجهول" : "Anonymous"),
       role: language === "ar" ? "مشترك" : "Subscriber",
       date: new Date().toLocaleDateString(language === "ar" ? "ar-SA" : "en-US"),
       rating: formRating,

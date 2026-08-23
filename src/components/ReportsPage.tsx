@@ -37,6 +37,12 @@ const ReportsPage = () => {
   const hours   = Math.floor(stats.totalStudyTimeMinutes / 60);
   const minutes = stats.totalStudyTimeMinutes % 60;
 
+  // useUserStats() returns "day"/"month" as fixed English abbreviations
+  // (used internally to bucket answers) - translate them here for display
+  // only, so the chart data structure/order itself stays untouched.
+  const translatedWeeklyActivity = stats.weeklyActivity.map((d) => ({ ...d, day: t(`day.${d.day}`) }));
+  const translatedMonthlyScores = stats.monthlyScores.map((m) => ({ ...m, month: t(`month.${m.month}`) }));
+
   const ScoreTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -95,7 +101,7 @@ const ReportsPage = () => {
               {stats.monthlyScores.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart
-                    data={stats.monthlyScores}
+                    data={translatedMonthlyScores}
                     margin={{ top: 10, right: 10, bottom: 5, left: -10 }}
                   >
                     <defs>
@@ -228,7 +234,7 @@ const ReportsPage = () => {
             <CardContent>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart
-                  data={stats.weeklyActivity}
+                  data={translatedWeeklyActivity}
                   margin={{ top: 5, right: 5, bottom: 5, left: -20 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(0,0%,20%)" />

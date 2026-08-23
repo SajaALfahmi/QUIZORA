@@ -7,18 +7,32 @@ import {
   Compass, Rocket, Lock
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useAuth } from "@/contexts/AuthContext";
 import logo from "@/assets/logo.png";
 import { useState, useEffect } from "react";
 
 const LandingPage = () => {
   const navigate = useNavigate();
   const { t, language, setLanguage } = useLanguage();
+  const { user, loading: authLoading } = useAuth();
   const isAr = language === "ar";
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
+  // Defense-in-depth: an already-authenticated visitor should never be
+  // stuck on the marketing landing page (e.g. an OAuth redirect that lands
+  // back on "/", or a bookmarked "/" while already signed in). Waits for
+  // authLoading to resolve so this can't fire on the transient
+  // not-yet-loaded state, and uses replace so the landing page doesn't sit
+  // in history between the user and /dashboard (no back-button loop).
+  useEffect(() => {
+    if (!authLoading && user) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [authLoading, user, navigate]);
 
   const features = [
     {
