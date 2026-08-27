@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,9 +18,15 @@ const AuthPage = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { user, loading } = useAuth();
   const { t } = useLanguage();
+
+  const from = location.state as { from?: { pathname: string; search?: string; hash?: string } } | null;
+  const redirectPath = from?.from
+    ? `${from.from.pathname}${from.from.search ?? ""}${from.from.hash ?? ""}`
+    : "/dashboard";
 
   if (loading) {
     return (
@@ -31,7 +37,7 @@ const AuthPage = () => {
   }
 
   if (user) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={redirectPath} replace />;
   }
 
   const handleSignIn = async () => {
@@ -46,7 +52,7 @@ const AuthPage = () => {
       toast({ title: t("auth.signInFailed"), description: error.message, variant: "destructive" });
     } else {
       toast({ title: t("auth.welcomeBack"), description: t("auth.signedInSuccess") });
-      navigate("/dashboard");
+      navigate(redirectPath);
     }
   };
 
@@ -80,9 +86,9 @@ const handleSocialLogin = async (provider: "google" | "apple") => {
     options: {
      // window.location.origin already resolves to whatever host is
      // currently serving the page (localhost in dev, the real domain in
-     // production), so appending /dashboard here stays environment-safe
-     // without hardcoding any host.
-     redirectTo: `${window.location.origin}/dashboard`
+     // production), so appending the redirect path here stays
+     // environment-safe without hardcoding any host.
+     redirectTo: `${window.location.origin}${redirectPath}`
     }
   });
 
