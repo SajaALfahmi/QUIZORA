@@ -14,6 +14,7 @@ interface Source {
   organization: string;
   official_source: string;
   similarity: number;
+  page: number | null;
 }
 
 const EXAMPLE_SCENARIO_AR =
@@ -159,6 +160,9 @@ const ScenarioAnalysisPage = () => {
                 <div key={s.document_id} className="flex items-start justify-between gap-3 text-sm border-b border-border/40 pb-2 last:border-0 last:pb-0">
                   <div>
                     <span className="font-medium">{s.document_id}</span>
+                    {s.page != null && (
+                      <span className="text-muted-foreground">{isArabic ? ` - صفحة ${s.page}` : ` - page ${s.page}`}</span>
+                    )}
                     {" - "}
                     <a href={s.official_source} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2 hover:text-primary/80">
                       {s.document_title}

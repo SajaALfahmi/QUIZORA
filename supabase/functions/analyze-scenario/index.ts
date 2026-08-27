@@ -171,6 +171,7 @@ serve(async (req) => {
       organization: c.organization,
       official_source: c.official_source,
       similarity: c.similarity,
+      page: c.page,
     }));
 
     // =========================
