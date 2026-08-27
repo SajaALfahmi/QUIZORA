@@ -68,6 +68,21 @@ const ScenarioAnalysisPage = () => {
     setScenario(isArabic ? EXAMPLE_SCENARIO_AR : EXAMPLE_SCENARIO_EN);
   }
 
+  function dedupeSources(list: Source[]) {
+    const byDocument = new Map<string, Source & { matchCount: number }>();
+    for (const s of list) {
+      const existing = byDocument.get(s.document_id);
+      if (existing) {
+        existing.matchCount += 1;
+      } else {
+        // `sources` arrives sorted by descending similarity, so the first
+        // occurrence of a document_id is always its highest-similarity match.
+        byDocument.set(s.document_id, { ...s, matchCount: 1 });
+      }
+    }
+    return Array.from(byDocument.values());
+  }
+
   return (
     <AppLayout>
       <div className="px-2 py-4 max-w-4xl mx-auto space-y-6" style={{ direction: isArabic ? "rtl" : "ltr" }}>
@@ -140,19 +155,26 @@ const ScenarioAnalysisPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-2">
-              {sources.map((s, i) => (
-                <div key={`${s.document_id}-${i}`} className="flex items-start justify-between gap-3 text-sm border-b border-border/40 pb-2 last:border-0 last:pb-0">
+              {dedupeSources(sources).map((s) => (
+                <div key={s.document_id} className="flex items-start justify-between gap-3 text-sm border-b border-border/40 pb-2 last:border-0 last:pb-0">
                   <div>
                     <span className="font-medium">{s.document_id}</span>
                     {" - "}
-                    <a href={s.official_source} target="_blank" rel="noreferrer" className="hover:underline">
+                    <a href={s.official_source} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2 hover:text-primary/80">
                       {s.document_title}
                     </a>
                     <div className="text-xs text-muted-foreground">{s.organization}</div>
                   </div>
-                  <Badge variant="secondary" className="shrink-0">
-                    {(s.similarity * 100).toFixed(0)}%
-                  </Badge>
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    {s.matchCount > 1 && (
+                      <Badge variant="outline" className="text-xs">
+                        ×{s.matchCount}
+                      </Badge>
+                    )}
+                    <Badge variant="secondary">
+                      {(s.similarity * 100).toFixed(0)}%
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </CardContent>
