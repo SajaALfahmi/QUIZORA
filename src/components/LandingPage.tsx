@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { 
   BookOpen, Award, TrendingUp, Sparkles, ArrowRight, Globe, 
   Brain, Zap, Target, BarChart3, CheckCircle2, Users, Lightbulb,
-  Compass, Rocket, Lock
+  Compass, Lock
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -343,34 +343,24 @@ const LandingPage = () => {
         </div>
       </section>
 
-      {/* Final CTA Section */}
+      {/* Policy Scenario Analysis CTA */}
       <section className="relative py-20 md:py-28 px-6 z-10">
         <div className="max-w-4xl mx-auto">
           <div className="bg-gradient-to-br from-primary/10 to-secondary/10 border border-primary/20 rounded-3xl p-12 md:p-16 text-center backdrop-blur-sm">
             <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-4">
-              {t("landing.finalCtaTitle")}
+              {t("landing.policyAnalysisCtaTitle")}
             </h2>
             <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
-              {t("landing.finalCtaText")}
+              {t("landing.policyAnalysisCtaDesc")}
             </p>
-            <div className="flex gap-4 justify-center flex-wrap">
-              <Button 
-                size="lg" 
-                className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-foreground font-bold shadow-2xl px-8 py-6 rounded-xl text-base transition-all duration-300 hover:scale-105" 
-                onClick={() => navigate("/auth")}
-              >
-                {t("landing.startYourFreeTrial")}
-                <Rocket className="w-5 h-5 ml-2" />
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline" 
-                className="border-border/50 text-foreground hover:bg-muted/50 px-8 py-6 rounded-xl text-base transition-all duration-300 hover:scale-105" 
-                onClick={() => navigate("/courses")}
-              >
-                {t("landing.viewCourses")}
-              </Button>
-            </div>
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-foreground font-bold shadow-2xl px-8 py-6 rounded-xl text-base transition-all duration-300 hover:scale-105"
+              onClick={() => navigate("/policy-analysis")}
+            >
+              {t("landing.policyAnalysisCtaButton")}
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
           </div>
         </div>
       </section>
@@ -378,8 +368,7 @@ const LandingPage = () => {
       {/* Footer */}
       <footer className="relative border-t border-border/20 py-12 px-6 z-10">
         <div className="max-w-6xl mx-auto text-center text-muted-foreground">
-          <p className="mb-4">{t("common.footer")}</p>
-          <p className="text-sm">{t("landing.footerTag")}</p>
+          <p>{t("common.footer")}</p>
         </div>
       </footer>
     </div>
