@@ -333,4 +333,4 @@ Name
 
 ## License
 
-This project is developed for educational and academic purposes only (Graduation Project - 2025-2026).
+This project was developed as a Graduation Project (2025-2026) and is licensed under the [MIT License](./LICENSE).
