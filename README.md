@@ -35,6 +35,11 @@ The system integrates with OpenAI GPT-4o-mini to:
 - Visual progress charts
 - Strength and weakness identification
 
+### Policy Scenario Analysis (AI Readiness Assessment)
+- Lets an institutional user describe an AI-use-case scenario and receive a readiness assessment grounded in a 12-document Knowledge Base (ITU, UNESCO, SDAIA, ETEC, OECD, NDMO)
+- Mapped to the ITU-T Y.3172 pipeline, with cited policy gaps and recommendations
+- RAG-based: pgvector semantic search over the Knowledge Base + GPT-4o-mini synthesis via the `analyze-scenario` Edge Function
+
 ---
 
 ## Tech Stack
@@ -83,6 +88,7 @@ QUIZORA-main/
 │   │   ├── ReportsPage.tsx        # Performance reports and analytics
 │   │   ├── ProfilePage.tsx        # User profile management
 │   │   ├── SettingsPage.tsx       # App settings (language, theme)
+│   │   ├── ScenarioAnalysisPage.tsx # Policy Scenario Analysis UI
 │   │   ├── ChatBot.tsx            # Floating AI chatbot widget
 │   │   ├── ProtectedRoute.tsx     # Auth guard for protected routes
 │   │   │
@@ -125,12 +131,22 @@ QUIZORA-main/
 │   │   │   └── index.ts
 │   │   ├── generate-explanation/  # Generate or regenerate AI explanation for a question
 │   │   │   └── index.ts
-│   │   └── review-questions/      # Batch AI review and difficulty correction of questions
+│   │   ├── review-questions/      # Batch AI review and difficulty correction of questions
+│   │   │   └── index.ts
+│   │   └── analyze-scenario/      # RAG-based scenario analysis (pgvector retrieval + GPT-4o-mini)
 │   │       └── index.ts
 │   │
 │   └── migrations/
 │       ├── ..._seed_initial_data.sql   # Database schema and initial seed data
 │       └── ...                         # Additional migrations
+│
+├── scripts/                       # Knowledge Base ingestion pipeline
+│   ├── ingest-knowledge-base.mjs  # Embeds and loads KB chunks into pgvector
+│   ├── validate-knowledge-base.mjs # Validates KB chunk structure before ingestion
+│   └── verify-ingestion.mjs       # Verifies ingested chunk counts/integrity
+│
+├── data/
+│   └── quizora_kb_chunks.jsonl    # Knowledge Base dataset (719 chunks, 12 documents)
 │
 ├── .env                           # Environment variables (not committed)
 ├── package.json
@@ -290,6 +306,7 @@ supabase functions deploy adaptive-engine
 supabase functions deploy generate-questions
 supabase functions deploy generate-explanation
 supabase functions deploy review-questions
+supabase functions deploy analyze-scenario
 ```
 
 Set the OpenAI secret:
