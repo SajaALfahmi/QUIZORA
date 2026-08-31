@@ -351,3 +351,8 @@ Name
 ## License
 
 This project was developed as a Graduation Project (2025-2026) and is licensed under the [MIT License](./LICENSE).
+
+## Project Demo 🎥
+
+[Watch the video on YouTube](https://youtu.be/tnIiUh0Z9hs)
+
