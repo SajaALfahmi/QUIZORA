@@ -11,11 +11,11 @@ The platform focuses on:
 
 ## Demo
 
-### 🌐 Live Application
+### Live Application
 [https://quizora-five.vercel.app](https://quizora-five.vercel.app)
 Try the platform yourself, including the Policy Scenario Analysis feature.
 
-### 🎥 Video Walkthrough
+### Video Walkthrough
 [Watch on YouTube](https://youtu.be/tnIiUh0Z9hs)
 A guided walkthrough of QUIZORA and the AI Readiness Assessment Assistant.
 
