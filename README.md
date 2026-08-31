@@ -9,6 +9,18 @@ The platform focuses on:
 
 ---
 
+## Demo
+
+### Live Application
+[https://quizora-five.vercel.app](https://quizora-five.vercel.app)
+Try the platform yourself, including the Policy Scenario Analysis feature.
+
+### Video Walkthrough
+[Watch on YouTube](https://youtu.be/tnIiUh0Z9hs)
+A guided walkthrough of QUIZORA and the AI Readiness Assessment Assistant.
+
+---
+
 ## Features
 
 ### Adaptive Learning Engine (BKT)
@@ -38,7 +50,7 @@ The system integrates with OpenAI GPT-4o-mini to:
 ### Policy Scenario Analysis (AI Readiness Assessment)
 - Lets an institutional user describe an AI-use-case scenario and receive a readiness assessment grounded in a 12-document Knowledge Base (ITU, UNESCO, SDAIA, ETEC, OECD, NDMO)
 - Mapped to the ITU-T Y.3172 pipeline, with cited policy gaps and recommendations
-- RAG-based: pgvector semantic search over the Knowledge Base + GPT-4o-mini synthesis via the `analyze-scenario` Edge Function
+- RAG-based: pgvector semantic search over the Knowledge Base + GPT-4o-mini synthesis via the \`analyze-scenario\` Edge Function
 
 ---
 
@@ -66,7 +78,7 @@ The system integrates with OpenAI GPT-4o-mini to:
 
 ## Project Structure
 
-```
+\`\`\`
 QUIZORA-main/
 │
 ├── public/                        # Static assets (logo, robots.txt)
@@ -153,7 +165,7 @@ QUIZORA-main/
 ├── vite.config.ts
 ├── tailwind.config.ts
 └── tsconfig.json
-```
+\`\`\`
 
 ---
 
@@ -166,23 +178,23 @@ Before running the project, make sure you have:
 - A **Supabase** project — [supabase.com](https://supabase.com)
 - An **OpenAI API key** — [platform.openai.com](https://platform.openai.com)
 - **Supabase CLI** (for deploying Edge Functions) — install via:
-  ```bash
+  \`\`\`bash
   npm install -g supabase
-  ```
+  \`\`\`
 
 ---
 
 ## Environment Variables
 
-Create a `.env` file in the project root:
+Create a \`.env\` file in the project root:
 
-```env
+\`\`\`env
 VITE_SUPABASE_URL=https://your-project.supabase.co
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 OPENAI_API_KEY=your_openai_api_key
-```
+\`\`\`
 
-> **Note:** `OPENAI_API_KEY` is used inside Supabase Edge Functions, not the frontend. Set it as a Supabase secret (see Deployment section).
+> **Note:** \`OPENAI_API_KEY\` is used inside Supabase Edge Functions, not the frontend. Set it as a Supabase secret (see Deployment section).
 
 ---
 
@@ -190,54 +202,55 @@ OPENAI_API_KEY=your_openai_api_key
 
 ### 1. Clone the repository
 
-```bash
+\`\`\`bash
 git clone https://github.com/SajaALfahmi/QUIZORA.git
 cd QUIZORA
-```
+\`\`\`
 
 ### 2. Install dependencies
 
-```bash
+\`\`\`bash
 npm install
-```
+\`\`\`
 
 ### 3. Set up environment variables
 
-```bash
+\`\`\`bash
 cp .env.example .env
 # Then fill in your Supabase URL and anon key
-```
+\`\`\`
 
 ### 4. Apply database migrations
 
-```bash
+\`\`\`bash
 supabase login
 supabase link --project-ref your_project_ref
 supabase db push
-```
+\`\`\`
 
 ### 5. Deploy Edge Functions
 
-```bash
+\`\`\`bash
 supabase functions deploy adaptive-engine
 supabase functions deploy generate-questions
 supabase functions deploy generate-explanation
 supabase functions deploy review-questions
-```
+supabase functions deploy analyze-scenario
+\`\`\`
 
 ### 6. Set Edge Function secrets
 
-```bash
+\`\`\`bash
 supabase secrets set OPENAI_API_KEY=your_openai_api_key
-```
+\`\`\`
 
 ### 7. Run the development server
 
-```bash
+\`\`\`bash
 npm run dev
-```
+\`\`\`
 
-The app will be available at `http://localhost:5173`
+The app will be available at \`http://localhost:5173\`
 
 ---
 
@@ -294,29 +307,25 @@ New questions are AI-generated automatically when the question pool for a course
 
 1. Push your code to GitHub
 2. Connect the repository to [Vercel](https://vercel.com)
-3. Add the environment variables (`VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`) in Vercel project settings
+3. Add the environment variables (\`VITE_SUPABASE_URL\`, \`VITE_SUPABASE_ANON_KEY\`) in Vercel project settings
 4. Deploy
 
 ### Backend (Supabase)
 
 Edge Functions are deployed via the Supabase CLI:
 
-```bash
+\`\`\`bash
 supabase functions deploy adaptive-engine
 supabase functions deploy generate-questions
 supabase functions deploy generate-explanation
 supabase functions deploy review-questions
 supabase functions deploy analyze-scenario
-```
+\`\`\`
 
 Set the OpenAI secret:
-```bash
+\`\`\`bash
 supabase secrets set OPENAI_API_KEY=your_openai_api_key
-```
-
-### Live Demo
-
- [https://quizora-five.vercel.app](https://quizora-five.vercel.app)
+\`\`\`
 
 ---
 
@@ -352,7 +361,4 @@ Name
 
 This project was developed as a Graduation Project (2025-2026) and is licensed under the [MIT License](./LICENSE).
 
-## Project Demo 🎥
-
-[Watch the video on YouTube](https://youtu.be/tnIiUh0Z9hs)
 
